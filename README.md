@@ -27,7 +27,7 @@ STEP 2 To install Traffic-X, run the following command:
 ---
 ```
 
-bash <(curl -s https://raw.githubusercontent.com/nimnabroX11/nbt/main/install.sh)
+bash <(curl -s https://raw.githubusercontent.com/nx991/nbt/main/install.sh)
 ```
 
 ---

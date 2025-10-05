@@ -1,23 +1,19 @@
 #!/bin/bash
-# @fileOverview Check usage stats of X-SL
-# @author MasterHide
-# @Copyright © 2025 x404 MASTER™
+# @fileOverview Installer for NBT
+# @author nx991
+# @Copyright © 2025 nbt
 # @license MIT
 #
-# You may not reproduce or distribute this work, in whole or in part, 
-# without the express written consent of the copyright owner.
-#
-# For more information, visit: https://t.me/Dark_Evi
-
+# Adapted from original script by MasterHide
 
 set -euo pipefail
 
-# -------- UI: Menu (same as before) --------
+# -------- UI: Menu --------
 show_menu() {
-    echo "Welcome to Traffic-X Installer/Uninstaller"
+    echo "Welcome to NBT Installer/Uninstaller"
     echo "Please choose an option:"
-    echo "1. Run Traffic-X (Install)"
-    echo "2. Uninstall Traffic-X"
+    echo "1. Run NBT (Install)"
+    echo "2. Uninstall NBT"
     echo "3. Exit"
 }
 
@@ -25,11 +21,12 @@ while true; do
     show_menu
     read -p "Enter your choice [1-3]: " CHOICE
     case $CHOICE in
-        1) echo "Proceeding with Traffic-X installation..."; break ;;
+        1) echo "Proceeding with NBT installation..."; break ;;
         2)
-            echo "Uninstalling Traffic-X..."
-            bash <(curl -s https://raw.githubusercontent.com/Tyga-x/Traffic-X/main/rm-TX.sh)
-            echo "Traffic-X has been uninstalled."
+            echo "Uninstalling NBT..."
+            # IMPORTANT: This URL must point to your new project's uninstaller
+            bash <(curl -s https://raw.githubusercontent.com/nx991/nbt/main/uninstall.sh)
+            echo "NBT has been uninstalled."
             exit 0
             ;;
         3) echo "Exiting..."; exit 0 ;;
@@ -72,41 +69,41 @@ sudo apt update
 echo "Installing required dependencies..."
 sudo apt install -y python3-pip python3-venv git sqlite3 socat unzip curl
 
-# -------- Download Traffic-X (same logic, clearer var names) --------
-echo "Downloading Traffic-X version $VERSION..."
+# -------- Download NBT --------
+echo "Downloading NBT version $VERSION..."
 if [ "$VERSION" = "latest" ]; then
-    DOWNLOAD_URL="https://github.com/Tyga-x/Traffic-X/archive/refs/heads/main.zip"
+    DOWNLOAD_URL="https://github.com/nx991/nbt/archive/refs/heads/main.zip"
 else
-    DOWNLOAD_URL="https://github.com/Tyga-x/Traffic-X/archive/refs/tags/$VERSION.zip"
+    DOWNLOAD_URL="https://github.com/nx991/nbt/archive/refs/tags/$VERSION.zip"
 fi
 
 cd "$HOME_DIR"
-if curl -L "$DOWNLOAD_URL" -o Traffic-X.zip; then
+if curl -L "$DOWNLOAD_URL" -o nbt.zip; then
     echo "Download successful. Extracting files..."
-    unzip -o Traffic-X.zip -d "$HOME_DIR"
-    EXTRACTED_DIR=$(ls -1 "$HOME_DIR" | grep -E "^Traffic-X-" | head -n 1)
-    rm -rf "$HOME_DIR/Traffic-X"
-    mv "$HOME_DIR/$EXTRACTED_DIR" "$HOME_DIR/Traffic-X"
-    rm Traffic-X.zip
+    unzip -o nbt.zip -d "$HOME_DIR"
+    EXTRACTED_DIR=$(ls -1 "$HOME_DIR" | grep -E "^nbt-" | head -n 1)
+    rm -rf "$HOME_DIR/nbt"
+    mv "$HOME_DIR/$EXTRACTED_DIR" "$HOME_DIR/nbt"
+    rm nbt.zip
 else
-    echo "Failed to download Traffic-X version $VERSION. Exiting."
+    echo "Failed to download NBT version $VERSION. Exiting."
     exit 1
 fi
 
 # -------- Verify repo structure (app.py now required from repo) --------
-if [ ! -d "$HOME_DIR/Traffic-X/templates" ]; then
+if [ ! -d "$HOME_DIR/nbt/templates" ]; then
   echo "Templates directory not found in repo. Exiting."
   exit 1
 fi
-if [ ! -f "$HOME_DIR/Traffic-X/app.py" ]; then
-  echo "ERROR: app.py not found in repo at $HOME_DIR/Traffic-X/app.py"
+if [ ! -f "$HOME_DIR/nbt/app.py" ]; then
+  echo "ERROR: app.py not found in repo at $HOME_DIR/nbt/app.py"
   echo "Please add your app.py to the repository and re-run this installer."
   exit 1
 fi
 
 # -------- Python venv + deps --------
 echo "Setting up the Python virtual environment..."
-cd "$HOME_DIR/Traffic-X"
+cd "$HOME_DIR/nbt"
 python3 -m venv venv
 source venv/bin/activate
 echo "Installing Python dependencies..."
@@ -122,7 +119,7 @@ deactivate
 
 # -------- SSL setup (robust + fixed acme.sh path) --------
 SSL_CONTEXT=""   # initialize so it's always defined (avoids 'unbound variable')
-CERT_DIR="/var/lib/Traffic-X/certs"
+CERT_DIR="/var/lib/nbt/certs"
 sudo mkdir -p "$CERT_DIR"
 sudo chown -R "$USERNAME:$USERNAME" "$CERT_DIR"
 
@@ -205,30 +202,30 @@ else
 fi
 
 # -------- systemd service (uses repo's app.py) --------
-SERVICE_FILE="/etc/systemd/system/traffic-x.service"
+SERVICE_FILE="/etc/systemd/system/nbt.service"
 
 # Stop existing service if running
-if systemctl is-active --quiet traffic-x; then
-    echo "Stopping existing Traffic-X service..."
-    sudo systemctl stop traffic-x
+if systemctl is-active --quiet nbt; then
+    echo "Stopping existing NBT service..."
+    sudo systemctl stop nbt
 fi
 
 echo "Setting up systemd service..."
 sudo tee "$SERVICE_FILE" >/dev/null <<EOL
 [Unit]
-Description=Traffic-X Web App
+Description=NBT Web App
 After=network.target
 
 [Service]
 User=$USERNAME
-WorkingDirectory=$HOME_DIR/Traffic-X
+WorkingDirectory=$HOME_DIR/nbt
 Environment="DB_PATH=/etc/x-ui/x-ui.db"
-ExecStart=/bin/bash -lc 'source $HOME_DIR/Traffic-X/venv/bin/activate && exec gunicorn -w 4 -b 0.0.0.0:$PORT $SSL_CONTEXT app:app'
+ExecStart=/bin/bash -lc 'source $HOME_DIR/nbt/venv/bin/activate && exec gunicorn -w 4 -b 0.0.0.0:$PORT $SSL_CONTEXT app:app'
 Restart=always
 RestartSec=5
-StandardOutput=append:/var/log/traffic-x.log
-StandardError=append:/var/log/traffic-x.log
-SyslogIdentifier=traffic-x
+StandardOutput=append:/var/log/nbt.log
+StandardError=append:/var/log/nbt.log
+SyslogIdentifier=nbt
 
 [Install]
 WantedBy=multi-user.target
@@ -236,11 +233,11 @@ EOL
 
 echo "Enabling the service to start on boot..."
 sudo systemctl daemon-reload
-sudo systemctl enable traffic-x
-sudo systemctl start traffic-x
+sudo systemctl enable nbt
+sudo systemctl start nbt
 
 # -------- Final messages --------
 PROTO="http"
 [ -n "$SSL_CONTEXT" ] && PROTO="https"
-echo "Installation complete! TRAFFIC - X  is Running Now at $PROTO://$DOMAIN:$PORT"
+echo "Installation complete! NBT is Running Now at $PROTO://$DOMAIN:$PORT"
 [ -z "$SSL_CONTEXT" ] && echo "SSL is disabled. (Cert generation failed or not present.)"
