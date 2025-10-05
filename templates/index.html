@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>NIMNABRO VPN | Modern Dashboard</title>
+  <title>NIMNABRO VPN</title>
+  <link rel="icon" type="image/png" href="https://www.dropbox.com/scl/fi/us9bg2xv9agp03izul2yq/channels4_profile_1-modified-1.png?rlkey=224q0p35gk2jum9rp40vvvpxc&raw=1">
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -24,16 +25,20 @@
         100% { background-position: 0% 50%; }
     }
 
-    @keyframes marching-ants {
-        to {
-            background-position: 100% 0;
-        }
-    }
-
     /* Keyframes for the text-clipped light sweep effect */
     @keyframes text-light-sweep {
         0% { background-position: 200% center; }
         100% { background-position: -200% center; }
+    }
+
+    /* NEW ANIMATION for safeguard text */
+    @keyframes text-pulse {
+        0%, 100% {
+            text-shadow: 0 0 7px rgba(74, 222, 128, 0.5), 0 0 10px rgba(74, 222, 128, 0.3);
+        }
+        50% {
+            text-shadow: 0 0 12px rgba(74, 222, 128, 0.8), 0 0 20px rgba(74, 222, 128, 0.5);
+        }
     }
 
     body {
@@ -77,12 +82,6 @@
         transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     }
     
-    .safeguard-border {
-        background: linear-gradient(90deg, #10b981, #10b981 50%, transparent 50%, transparent 100%);
-        background-size: 50px 2px;
-        animation: marching-ants 2s linear infinite;
-        padding: 2px;
-    }
     .safeguard-content {
         background-color: rgba(16, 185, 129, 0.1);
     }
@@ -94,6 +93,10 @@
         background-clip: text;
         background-size: 250% auto;
         animation: text-light-sweep 5s ease-in-out infinite;
+    }
+
+    .animated-safeguard-text {
+        animation: text-pulse 2.5s infinite ease-in-out;
     }
 
     /* Custom Animations */
@@ -240,11 +243,9 @@
           <i class="fas fa-shield-alt text-cyan-400 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6"></i>
           <span>Server Safeguard</span>
         </h3>
-        <div class="safeguard-border rounded-xl">
-            <div class="safeguard-content rounded-lg p-4 text-center">
-                <i class="fas fa-lock text-4xl text-green-400 mb-2"></i>
-                <span class="block text-green-300 text-xl">Active Firewall & DDoS Protection</span>
-            </div>
+        <div class="safeguard-content rounded-lg p-4 text-center border-2 border-green-500">
+            <i class="fas fa-lock text-4xl text-green-400 mb-2"></i>
+            <span class="block text-green-300 text-xl animated-safeguard-text">Active Firewall & DDoS Protection</span>
         </div>
       </div>
     </div>
@@ -402,62 +403,6 @@
     // setInterval(refreshConns, 4000);
     */
 
-    // --- Developer Tools Protection ---
-
-    // Disable right-click context menu
-    document.addEventListener('contextmenu', event => event.preventDefault());
-
-    const devToolsCheck = () => {
-        const threshold = 160;
-        const devToolsOpen = (window.outerWidth - window.innerWidth > threshold) || 
-                             (window.outerHeight - window.innerHeight > threshold);
-
-        const body = document.querySelector('body');
-        const mainContainer = document.querySelector('.container');
-        let overlay = document.getElementById('dev-tools-overlay');
-
-        if (devToolsOpen) {
-            if (!overlay) {
-                // Hide main content and show overlay
-                if(mainContainer) mainContainer.style.display = 'none';
-
-                overlay = document.createElement('div');
-                overlay.id = 'dev-tools-overlay';
-                overlay.style.position = 'fixed';
-                overlay.style.top = '0';
-                overlay.style.left = '0';
-                overlay.style.width = '100%';
-                overlay.style.height = '100%';
-                overlay.style.backgroundColor = '#0f172a';
-                overlay.style.zIndex = '999999';
-                overlay.style.display = 'flex';
-                overlay.style.justifyContent = 'center';
-                overlay.style.alignItems = 'center';
-                overlay.style.flexDirection = 'column';
-                overlay.style.color = 'white';
-                overlay.style.fontFamily = `'Russo One', sans-serif`;
-                overlay.innerHTML = `
-                    <div class="text-center">
-                        <i class="fas fa-exclamation-triangle fa-5x text-red-500 mb-4"></i>
-                        <h2 class="text-4xl mb-2">Developer Tools Detected</h2>
-                        <p class="text-xl text-slate-400 sans-fallback">Please close developer tools to view this site.</p>
-                    </div>
-                `;
-                body.appendChild(overlay);
-            }
-        } else {
-            if (overlay) {
-                // Show main content and remove overlay
-                if(mainContainer) mainContainer.style.display = 'block';
-                overlay.remove();
-            }
-        }
-    };
-
-    // Run the check periodically
-    setInterval(devToolsCheck, 500);
-    // Initial check on load
-    devToolsCheck();
   </script>
 
 </body>
