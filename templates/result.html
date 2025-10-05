@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>NIMNABRO VPN | Usage Details</title>
+  <link rel="icon" type="image/png" href="https://www.dropbox.com/scl/fi/us9bg2xv9agp03izul2yq/channels4_profile_1-modified-1.png?rlkey=224q0p35gk2jum9rp40vvvpxc&raw=1">
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -65,7 +66,7 @@
     }
     
     .progress-bar {
-        transition: width 0.8s ease, background-color .4s ease;
+        transition: width 0.8s cubic-bezier(0.25, 1, 0.5, 1), background-color .4s ease;
     }
     
     @keyframes fadeIn {
@@ -170,14 +171,20 @@
         <div id="summary-chart" class="w-full h-64"></div>
       </div>
 
-      <!-- Expiry Gauge (days left) -->
-      <div class="card rounded-xl p-6 opacity-0 group">
-        <h3 class="flex items-center gap-3 text-3xl text-white mb-2">
+      <!-- Expiry Bar (New Component) -->
+      <div class="card rounded-xl p-6 opacity-0 group flex flex-col justify-center">
+        <h3 class="flex items-center gap-3 text-3xl text-white mb-4">
             <i class="far fa-clock text-cyan-400 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6"></i>
             <span>Days to Expiry</span>
         </h3>
-        <div id="expiry-gauge" class="w-full h-64"></div>
-        <p id="expiry-desc" class="text-center -mt-4 sans-fallback text-lg"></p>
+        <div class="text-center">
+            <div id="days-left-display" class="text-7xl font-bold text-white transition-colors">0</div>
+            <p id="days-left-subtext" class="text-slate-400 -mt-1 text-lg sans-fallback">Days Remaining</p>
+        </div>
+        <div class="w-full bg-slate-700 rounded-full h-4 mt-4 overflow-hidden">
+            <div id="days-left-bar" class="h-4 rounded-full progress-bar" style="width: 0%;"></div>
+        </div>
+        <p id="expiry-desc" class="text-center mt-3 sans-fallback text-lg h-6"></p>
       </div>
 
     </div>
@@ -218,6 +225,22 @@
       if (U.includes("MB")) return value;
       if (U.includes("KB")) return value/1024;
       return value;
+    }
+    // Animate integer values
+    function animateValue(obj, start, end, duration) {
+      let startTimestamp = null;
+      const step = (timestamp) => {
+        if (!startTimestamp) startTimestamp = timestamp;
+        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+        const currentValue = Math.floor(progress * (end - start) + start);
+        obj.innerHTML = `${currentValue}`;
+        if (progress < 1) {
+          window.requestAnimationFrame(step);
+        } else {
+            obj.innerHTML = `${end}`;
+        }
+      };
+      window.requestAnimationFrame(step);
     }
 
     // ===== Read values from Jinja =====
@@ -280,7 +303,7 @@
     }
     applyStatusUI(userStatus);
 
-    // ===== Expiry gauge & copy =====
+    // ===== Expiry Bar & copy (New Logic) =====
     function daysUntil(dateStr){
       const d = new Date(dateStr.replace(" ", "T")+"Z");
       if (isNaN(d.getTime())) return null;
@@ -288,16 +311,43 @@
     }
     const dLeft = daysUntil(expiryStr);
     const expiryDesc = document.getElementById("expiry-desc");
+    const daysDisplay = document.getElementById("days-left-display");
+    const daysBar = document.getElementById("days-left-bar");
+    const daysSubtext = document.getElementById("days-left-subtext");
+    
+    const finalDays = dLeft !== null ? dLeft : 0;
+    animateValue(daysDisplay, 0, Math.abs(finalDays), 800);
+
     if (dLeft === null){
       expiryDesc.textContent = "Invalid expiry date.";
+      daysDisplay.textContent = 'N/A';
     } else if (dLeft < 0){
       expiryDesc.innerHTML = `<span class="text-red-400">Expired ${Math.abs(dLeft)} days ago</span>`;
+      daysDisplay.classList.add('text-red-400');
+      daysSubtext.textContent = 'Days Ago';
     } else {
-      const color = dLeft <= 3 ? 'text-red-400' : dLeft <= 7 ? 'text-yellow-400' : 'text-green-400';
-      expiryDesc.innerHTML = `<span class="${color}">${dLeft} days remaining</span>`;
+      expiryDesc.innerHTML = `<span>&nbsp;</span>`; // Keep space consistent
     }
 
-    // ===== Charts (ApexCharts) with new theme =====
+    // Calculate percentage for the bar (based on a 30-day period)
+    const pct = dLeft !== null ? Math.max(0, Math.min(100, (dLeft / 30) * 100)) : 0;
+    
+    // Set bar color and animate width
+    setTimeout(() => {
+        daysBar.style.width = pct + '%';
+        if (dLeft === null || dLeft < 0) {
+            daysBar.style.width = '100%';
+            daysBar.style.backgroundColor = '#ef4444'; // red-500
+        } else if (dLeft <= 3) {
+            daysBar.style.backgroundColor = '#ef4444'; // red-500
+        } else if (dLeft <= 7) {
+            daysBar.style.backgroundColor = '#facc15'; // yellow-400
+        } else {
+            daysBar.style.backgroundColor = '#22c55e'; // green-500
+        }
+    }, 300);
+
+    // ===== Charts (ApexCharts) =====
     const summaryOptions = {
       chart: { type: 'bar', height: '100%', foreColor:'#cbd5e1', toolbar: { show: false } },
       series: [
@@ -316,28 +366,6 @@
     };
     new ApexCharts(document.querySelector("#summary-chart"), summaryOptions).render();
 
-    // Radial Bar Gauge (Days to Expiry)
-    let pct = 100;
-    if (dLeft !== null){
-      pct = Math.max(0, Math.min(100, (dLeft / 30) * 100)); // Days remaining out of 30
-    }
-    const gaugeOptions = {
-      chart: { type:'radialBar', height: '100%', foreColor:'#cbd5e1', toolbar: { show: false } },
-      series: [ pct ],
-      labels: ['Days Remaining'],
-      colors: [ pct > 30 ? '#22c55e' : (pct > 10 ? '#facc15' : '#ef4444') ], // green, yellow, red
-      plotOptions:{
-        radialBar:{
-          hollow:{ size:'55%' },
-          track: { background: '#334155'},
-          dataLabels:{
-            name:{ offsetY: -10, fontSize: '18px' },
-            value:{ offsetY: 5, fontSize: '24px', formatter:(v) => dLeft !== null ? dLeft : 'N/A' }
-          }
-        }
-      }
-    };
-    new ApexCharts(document.querySelector("#expiry-gauge"), gaugeOptions).render();
   </script>
 
 </body>
