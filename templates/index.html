@@ -202,7 +202,7 @@
         </button>
         <div class="space-y-2 text-slate-300 text-lg sans-fallback">
             <div class="flex justify-between items-center"><span class="font-semibold">Ping:</span> <strong id="ping-result" class="text-white">-</strong></div>
-            <div class="flex justify-between items-center"><span class="font-semibold">Location:</span> <strong id="server-location" class="text-white sans-fallback">--</strong></div>
+            <div class="flex justify-between items-center"><span class="font-semibold">Location:</span> <strong id="server-location" class="text-white sans-fallback text-right">--</strong></div>
             <div class="flex justify-between items-center">
                 <span class="font-semibold">Status:</span>
                 <div class="flex items-center gap-2">
@@ -320,35 +320,23 @@
         const loc = await res.json();
         
         // Base logic to determine the location text
-        let locationText = `${loc.city}, ${loc.country}`;
-        if (loc.city && loc.country && loc.city.toLowerCase() === loc.country.toLowerCase()) {
-            locationText = loc.country;
+        let locationText = loc.country;
+        if (loc.city && loc.country && loc.city.toLowerCase() !== loc.country.toLowerCase()) {
+            locationText = `${loc.city}, ${loc.country}`;
         }
 
-        // New, more robust method for displaying the flag
-        // IMPORTANT: This still requires your server to provide a 'country_code' (e.g., "SG", "US")
-        if (loc.country_code) {
-            const flagUrl = `https://flagcdn.com/w40/${loc.country_code.toLowerCase()}.png`;
+        // NEW, FINAL METHOD for displaying the flag.
+        // This requires your server to provide a 'country_code' (e.g., "SG", "US")
+        if (loc.country_code && typeof loc.country_code === 'string' && loc.country_code.length === 2) {
+            const flagUrl = `https://flagcdn.com/h24/${loc.country_code.toLowerCase()}.png`;
             
-            // Create elements manually to ensure they render correctly
-            const flagImg = document.createElement('img');
-            flagImg.src = flagUrl;
-            flagImg.alt = loc.country;
-            flagImg.className = "inline-block h-5 w-auto mr-2 align-middle";
-            
-            const textSpan = document.createElement('span');
-            textSpan.className = "align-middle";
-            textSpan.textContent = locationText;
-
-            // Clear the element and add the new content
-            locationEl.innerHTML = ''; 
-            locationEl.appendChild(flagImg);
-            locationEl.appendChild(textSpan);
-
-            // Hide the image if it fails to load, preventing a broken image icon
-            flagImg.onerror = () => { 
-                locationEl.textContent = locationText;
-            };
+            locationEl.innerHTML = `
+                <span class="align-middle">${locationText}</span>
+                <img src="${flagUrl}" 
+                     alt="${loc.country}" 
+                     class="inline-block h-5 w-auto ml-2 align-middle"
+                     onerror="this.style.display='none'">
+            `;
         } else {
             // Fallback to text only if no country_code is provided
             locationEl.textContent = locationText;
