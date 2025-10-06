@@ -329,31 +329,20 @@
       }
     });
 
-    // --- Server data updates ---
-    // A variable to store the initial disk usage so it doesn't fluctuate.
-    let initialDiskUsage = null;
-
+    // Server data updates (from oldindex.html)
     setInterval(async () => {
       try {
         const res = await fetch("/server-status");
         const data = await res.json();
-        
-        // CPU and Memory are volatile and should update live.
-        animateValue(document.getElementById("cpu-usage"), parseInt(document.getElementById("cpu-usage").textContent) || 0, data.cpu, 500);
-        document.getElementById("cpu-progress").style.width = `${data.cpu}%`;
-        
-        animateValue(document.getElementById("memory-usage"), parseInt(document.getElementById("memory-usage").textContent) || 0, data.ram, 500);
-        document.getElementById("memory-progress").style.width = `${data.ram}%`;
+        document.getElementById("cpu-usage").textContent = `${data.cpu}%`;
+        document.getElementById("memory-usage").textContent = `${data.ram}%`;
+        document.getElementById("disk-usage").textContent = `${data.disk}%`;
 
-        // For Disk, we only set it the first time to prevent visual fluctuations.
-        if (initialDiskUsage === null) {
-            initialDiskUsage = data.disk;
-            animateValue(document.getElementById("disk-usage"), parseInt(document.getElementById("disk-usage").textContent) || 0, initialDiskUsage, 500);
-            document.getElementById("disk-progress").style.width = `${initialDiskUsage}%`;
-        }
-        
+        document.getElementById("cpu-progress").style.width = `${data.cpu}%`;
+        document.getElementById("memory-progress").style.width = `${data.ram}%`;
+        document.getElementById("disk-progress").style.width = `${data.disk}%`;
       } catch (e) {
-        console.error("Status fetch failed", e);
+        console.error("Status fetch failed");
       }
     }, 2000);
 
