@@ -202,7 +202,7 @@
         </button>
         <div class="space-y-2 text-slate-300 text-lg sans-fallback">
             <div class="flex justify-between items-center"><span class="font-semibold">Ping:</span> <strong id="ping-result" class="text-white">-</strong></div>
-            <div class="flex justify-between items-center"><span class="font-semibold">Location:</span> <strong id="server-location" class="text-white sans-fallback">--</strong></div>
+            <div class="flex justify-between items-center"><span class="font-semibold">Location:</span> <strong id="server-location" class="text-white">--</strong></div>
             <div class="flex justify-between items-center">
                 <span class="font-semibold">Status:</span>
                 <div class="flex items-center gap-2">
@@ -278,6 +278,40 @@
       });
     });
 
+    // Animate integer values (e.g., percentages)
+    function animateValue(obj, start, end, duration) {
+      let startTimestamp = null;
+      const step = (timestamp) => {
+        if (!startTimestamp) startTimestamp = timestamp;
+        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+        const currentValue = Math.floor(progress * (end - start) + start);
+        obj.innerHTML = `${currentValue}%`;
+        if (progress < 1) {
+          window.requestAnimationFrame(step);
+        } else {
+            obj.innerHTML = `${end}%`; // Ensure it ends on the exact value
+        }
+      };
+      window.requestAnimationFrame(step);
+    }
+
+    // Animate float values (e.g., Mbps)
+    function animateFloatValue(obj, start, end, duration) {
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            const currentValue = progress * (end - start) + start;
+            obj.innerHTML = `${currentValue.toFixed(2)} Mbps`;
+            if (progress < 1) {
+                window.requestAnimationFrame(step);
+            } else {
+                obj.innerHTML = `${end.toFixed(2)} Mbps`; // Ensure it ends on the exact value
+            }
+        };
+        window.requestAnimationFrame(step);
+    }
+    
     // --- ALL SERVER INTERACTION LOGIC IS PRESERVED ---
 
     // Ping logic
@@ -311,50 +345,15 @@
         console.error("Status fetch failed");
       }
     }, 2000);
-    
+
     // Fetch server location
     (async () => {
-      const locationEl = document.getElementById("server-location");
       try {
         const res = await fetch("/server-location");
         const loc = await res.json();
-        
-        // Base logic to determine the location text
-        let locationText = `${loc.city}, ${loc.country}`;
-        if (loc.city && loc.country && loc.city.toLowerCase() === loc.country.toLowerCase()) {
-            locationText = loc.country;
-        }
-
-        // New, more robust method for displaying the flag
-        // IMPORTANT: This still requires your server to provide a 'country_code' (e.g., "SG", "US")
-        if (loc.country_code) {
-            const flagUrl = `https://flagcdn.com/w40/${loc.country_code.toLowerCase()}.png`;
-            
-            // Create elements manually to ensure they render correctly
-            const flagImg = document.createElement('img');
-            flagImg.src = flagUrl;
-            flagImg.alt = loc.country;
-            flagImg.className = "inline-block h-5 w-auto mr-2 align-middle";
-            
-            const textSpan = document.createElement('span');
-            textSpan.className = "align-middle";
-            textSpan.textContent = locationText;
-
-            // Clear the element and add the new content
-            locationEl.innerHTML = ''; 
-            locationEl.appendChild(flagImg);
-            locationEl.appendChild(textSpan);
-
-            // Hide the image if it fails to load, preventing a broken image icon
-            flagImg.onerror = () => { 
-                locationEl.textContent = locationText;
-            };
-        } else {
-            // Fallback to text only if no country_code is provided
-            locationEl.textContent = locationText;
-        }
+        document.getElementById("server-location").textContent = `${loc.city}, ${loc.country}`;
       } catch {
-        locationEl.textContent = "Unavailable";
+        document.getElementById("server-location").textContent = "Unavailable";
       }
     })();
 
@@ -375,9 +374,8 @@
         const r = await fetch("/net-live");
         const data = await r.json();
         if (data && data.total) {
-          // No animation for network traffic, direct update
-          document.getElementById("download-traffic").textContent = data.total.rx_mbps.toFixed(2) + " Mbps";
-          document.getElementById("upload-traffic").textContent   = data.total.tx_mbps.toFixed(2) + " Mbps";
+          animateFloatValue(document.getElementById("download-traffic"), parseFloat(document.getElementById("download-traffic").textContent) || 0, data.total.rx_mbps, 500);
+          animateFloatValue(document.getElementById("upload-traffic"), parseFloat(document.getElementById("upload-traffic").textContent) || 0, data.total.tx_mbps, 500);
         }
       } catch (e) {
         // Ignore transient errors
