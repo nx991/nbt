@@ -318,17 +318,23 @@
         const res = await fetch("/server-location");
         const loc = await res.json();
         
-        let locationText = '';
+        // This is the original, simple logic for displaying the location text
+        let locationText = `${loc.city}, ${loc.country}`;
+
+        // This prevents showing duplicate names e.g., "Singapore, Singapore"
         if (loc.city && loc.country && loc.city.toLowerCase() === loc.country.toLowerCase()) {
             locationText = loc.country;
-        } else {
-            locationText = `${loc.city}, ${loc.country}`;
         }
 
-        const flagUrl = `https://flagcdn.com/h24/${loc.country_code.toLowerCase()}.png`;
-        const flagHTML = `<img src="${flagUrl}" alt="${loc.country}" class="inline-block h-5 w-auto mr-2 align-middle">`;
-        
-        document.getElementById("server-location").innerHTML = `${flagHTML}<span class="align-middle">${locationText}</span>`;
+        // Safely check if the country_code is available before trying to show a flag
+        if (loc.country_code) {
+            const flagUrl = `https://flagcdn.com/h24/${loc.country_code.toLowerCase()}.png`;
+            const flagHTML = `<img src="${flagUrl}" alt="${loc.country}" class="inline-block h-5 w-auto mr-2 align-middle" onerror="this.style.display='none'">`;
+            document.getElementById("server-location").innerHTML = `${flagHTML}<span class="align-middle">${locationText}</span>`;
+        } else {
+            // If no country_code, just show the text without a flag
+            document.getElementById("server-location").textContent = locationText;
+        }
       } catch {
         document.getElementById("server-location").textContent = "Unavailable";
       }
