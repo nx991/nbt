@@ -277,8 +277,6 @@
         card.classList.add('anim-fadeInUp');
       });
     });
-
-    // --- ALL SERVER INTERACTION LOGIC IS PRESERVED ---
     
     // --- Helper function for smooth number animation (for network traffic only) ---
     function animateFloatValue(element, start, end, duration, unit) {
@@ -290,10 +288,14 @@
             element.textContent = `${currentValue.toFixed(2)} ${unit}`;
             if (progress < 1) {
                 window.requestAnimationFrame(step);
+            } else {
+                 element.textContent = `${end.toFixed(2)} ${unit}`;
             }
         };
         window.requestAnimationFrame(step);
     }
+
+    // --- ALL SERVER INTERACTION LOGIC IS PRESERVED ---
 
     // Ping logic
     document.getElementById("ping-button").addEventListener("click", async () => {
@@ -316,7 +318,7 @@
         const res = await fetch("/server-status");
         const data = await res.json();
         
-        // Instant, high-precision update for server stats
+        // FIX: Display exact decimal values for server stats
         const newCpu = parseFloat(data.cpu).toFixed(2);
         const newMem = parseFloat(data.ram).toFixed(2);
         const newDisk = parseFloat(data.disk).toFixed(2);
@@ -348,18 +350,7 @@
             locationText = `${loc.city}, ${loc.country}`;
         }
 
-        if (loc.country_code && typeof loc.country_code === 'string' && loc.country_code.length === 2) {
-            const flagUrl = `https://flagcdn.com/h24/${loc.country_code.toLowerCase()}.png`;
-            locationEl.innerHTML = `
-                <span class="align-middle">${locationText}</span>
-                <img src="${flagUrl}" 
-                     alt="${loc.country}" 
-                     class="inline-block h-5 w-auto ml-2 align-middle"
-                     onerror="this.style.display='none'">
-            `;
-        } else {
-            locationEl.textContent = locationText;
-        }
+        locationEl.textContent = locationText;
       } catch {
         locationEl.textContent = "Unavailable";
       }
