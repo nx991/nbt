@@ -202,7 +202,7 @@
         </button>
         <div class="space-y-2 text-slate-300 text-lg sans-fallback">
             <div class="flex justify-between items-center"><span class="font-semibold">Ping:</span> <strong id="ping-result" class="text-white">-</strong></div>
-            <div class="flex justify-between items-center"><span class="font-semibold">Location:</span> <strong id="server-location" class="text-white">--</strong></div>
+            <div class="flex justify-between items-center"><span class="font-semibold">Location:</span> <strong id="server-location" class="text-white sans-fallback">--</strong></div>
             <div class="flex justify-between items-center">
                 <span class="font-semibold">Status:</span>
                 <div class="flex items-center gap-2">
@@ -332,11 +332,12 @@
         
         let locationString = '';
         const flag = getFlagEmoji(loc.country_code);
+        const flagHTML = flag ? `<span class="mr-2">${flag}</span>` : '';
 
         if (loc.city && loc.country && loc.city.toLowerCase() === loc.country.toLowerCase()) {
-            locationString = `${flag} ${loc.country}`;
+            locationString = `${flagHTML}${loc.country}`;
         } else {
-            locationString = `${flag} ${loc.city}, ${loc.country}`;
+            locationString = `${flagHTML}${loc.city}, ${loc.country}`;
         }
         
         document.getElementById("server-location").innerHTML = locationString; // Use innerHTML to render emoji
