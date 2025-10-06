@@ -79,7 +79,7 @@
     }
     
     .progress-bar {
-        transition: width 1s ease-out;
+        transition: width 1.9s ease-in-out;
     }
     
     .safeguard-content {
@@ -328,9 +328,9 @@
         const newMem = parseFloat(data.ram);
         const newDisk = parseFloat(data.disk);
 
-        // Animate CPU and Memory for a smoother feel over 1 second
-        animateValue(cpuUsageEl, oldCpu, newCpu, 1000);
-        animateValue(memUsageEl, oldMem, newMem, 1000);
+        // Animate CPU and Memory for a smoother feel over a longer duration
+        animateValue(cpuUsageEl, oldCpu, newCpu, 1900);
+        animateValue(memUsageEl, oldMem, newMem, 1900);
 
         // Disk can still be a direct update as it's less volatile
         diskUsageEl.textContent = `${newDisk.toFixed(2)}%`;
