@@ -124,6 +124,11 @@
         font-family: 'Inter', sans-serif;
         letter-spacing: normal;
     }
+    
+    /* New style to ensure emoji rendering */
+    .emoji-flag {
+        font-family: "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif;
+    }
   </style>
 </head>
 <body class="antialiased">
@@ -332,7 +337,7 @@
         
         let locationString = '';
         const flag = getFlagEmoji(loc.country_code);
-        const flagHTML = flag ? `<span class="mr-2">${flag}</span>` : '';
+        const flagHTML = flag ? `<span class="mr-2 emoji-flag">${flag}</span>` : '';
 
         if (loc.city && loc.country && loc.city.toLowerCase() === loc.country.toLowerCase()) {
             locationString = `${flagHTML}${loc.country}`;
