@@ -124,11 +124,6 @@
         font-family: 'Inter', sans-serif;
         letter-spacing: normal;
     }
-    
-    /* New style to ensure emoji rendering */
-    .emoji-flag {
-        font-family: "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif;
-    }
   </style>
 </head>
 <body class="antialiased">
@@ -317,35 +312,23 @@
       }
     }, 2000);
     
-    // --- NEW: Function to convert country code to flag emoji ---
-    function getFlagEmoji(countryCode) {
-        if (!countryCode || countryCode.length !== 2) {
-            return '';
-        }
-        const codePoints = countryCode
-            .toUpperCase()
-            .split('')
-            .map(char => 127397 + char.charCodeAt());
-        return String.fromCodePoint(...codePoints);
-    }
-
     // Fetch server location
     (async () => {
       try {
         const res = await fetch("/server-location");
         const loc = await res.json();
         
-        let locationString = '';
-        const flag = getFlagEmoji(loc.country_code);
-        const flagHTML = flag ? `<span class="mr-2 emoji-flag">${flag}</span>` : '';
-
+        let locationText = '';
         if (loc.city && loc.country && loc.city.toLowerCase() === loc.country.toLowerCase()) {
-            locationString = `${flagHTML}${loc.country}`;
+            locationText = loc.country;
         } else {
-            locationString = `${flagHTML}${loc.city}, ${loc.country}`;
+            locationText = `${loc.city}, ${loc.country}`;
         }
+
+        const flagUrl = `https://flagcdn.com/h24/${loc.country_code.toLowerCase()}.png`;
+        const flagHTML = `<img src="${flagUrl}" alt="${loc.country}" class="inline-block h-5 w-auto mr-2 align-middle">`;
         
-        document.getElementById("server-location").innerHTML = locationString; // Use innerHTML to render emoji
+        document.getElementById("server-location").innerHTML = `${flagHTML}<span class="align-middle">${locationText}</span>`;
       } catch {
         document.getElementById("server-location").textContent = "Unavailable";
       }
