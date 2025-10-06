@@ -278,40 +278,6 @@
       });
     });
 
-    // Animate integer values (e.g., percentages)
-    function animateValue(obj, start, end, duration) {
-      let startTimestamp = null;
-      const step = (timestamp) => {
-        if (!startTimestamp) startTimestamp = timestamp;
-        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-        const currentValue = Math.floor(progress * (end - start) + start);
-        obj.innerHTML = `${currentValue}%`;
-        if (progress < 1) {
-          window.requestAnimationFrame(step);
-        } else {
-            obj.innerHTML = `${end}%`; // Ensure it ends on the exact value
-        }
-      };
-      window.requestAnimationFrame(step);
-    }
-
-    // Animate float values (e.g., Mbps)
-    function animateFloatValue(obj, start, end, duration) {
-        let startTimestamp = null;
-        const step = (timestamp) => {
-            if (!startTimestamp) startTimestamp = timestamp;
-            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-            const currentValue = progress * (end - start) + start;
-            obj.innerHTML = `${currentValue.toFixed(2)} Mbps`;
-            if (progress < 1) {
-                window.requestAnimationFrame(step);
-            } else {
-                obj.innerHTML = `${end.toFixed(2)} Mbps`; // Ensure it ends on the exact value
-            }
-        };
-        window.requestAnimationFrame(step);
-    }
-    
     // --- ALL SERVER INTERACTION LOGIC IS PRESERVED ---
 
     // Ping logic
@@ -345,13 +311,35 @@
         console.error("Status fetch failed");
       }
     }, 2000);
+    
+    // --- NEW: Function to convert country code to flag emoji ---
+    function getFlagEmoji(countryCode) {
+        if (!countryCode || countryCode.length !== 2) {
+            return '';
+        }
+        const codePoints = countryCode
+            .toUpperCase()
+            .split('')
+            .map(char => 127397 + char.charCodeAt());
+        return String.fromCodePoint(...codePoints);
+    }
 
     // Fetch server location
     (async () => {
       try {
         const res = await fetch("/server-location");
         const loc = await res.json();
-        document.getElementById("server-location").textContent = `${loc.city}, ${loc.country}`;
+        
+        let locationString = '';
+        const flag = getFlagEmoji(loc.country_code);
+
+        if (loc.city && loc.country && loc.city.toLowerCase() === loc.country.toLowerCase()) {
+            locationString = `${flag} ${loc.country}`;
+        } else {
+            locationString = `${flag} ${loc.city}, ${loc.country}`;
+        }
+        
+        document.getElementById("server-location").innerHTML = locationString; // Use innerHTML to render emoji
       } catch {
         document.getElementById("server-location").textContent = "Unavailable";
       }
@@ -374,8 +362,9 @@
         const r = await fetch("/net-live");
         const data = await r.json();
         if (data && data.total) {
-          animateFloatValue(document.getElementById("download-traffic"), parseFloat(document.getElementById("download-traffic").textContent) || 0, data.total.rx_mbps, 500);
-          animateFloatValue(document.getElementById("upload-traffic"), parseFloat(document.getElementById("upload-traffic").textContent) || 0, data.total.tx_mbps, 500);
+          // No animation for network traffic, direct update
+          document.getElementById("download-traffic").textContent = data.total.rx_mbps.toFixed(2) + " Mbps";
+          document.getElementById("upload-traffic").textContent   = data.total.tx_mbps.toFixed(2) + " Mbps";
         }
       } catch (e) {
         // Ignore transient errors
