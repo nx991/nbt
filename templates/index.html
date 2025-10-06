@@ -164,7 +164,7 @@
           <div>
             <div class="flex justify-between mb-1 text-lg">
               <span class="font-semibold text-slate-300">CPU</span>
-              <span class="font-semibold text-cyan-400" id="cpu-usage">0.00%</span>
+              <span class="font-semibold text-cyan-400" id="cpu-usage">0%</span>
             </div>
             <div class="w-full bg-slate-700 rounded-full h-2.5">
               <div class="bg-cyan-500 h-2.5 rounded-full progress-bar" id="cpu-progress" style="width: 0%;"></div>
@@ -173,7 +173,7 @@
           <div>
             <div class="flex justify-between mb-1 text-lg">
               <span class="font-semibold text-slate-300">Memory</span>
-              <span class="font-semibold text-cyan-400" id="memory-usage">0.00%</span>
+              <span class="font-semibold text-cyan-400" id="memory-usage">0%</span>
             </div>
             <div class="w-full bg-slate-700 rounded-full h-2.5">
               <div class="bg-cyan-500 h-2.5 rounded-full progress-bar" id="memory-progress" style="width: 0%;"></div>
@@ -182,7 +182,7 @@
           <div>
             <div class="flex justify-between mb-1 text-lg">
               <span class="font-semibold text-slate-300">Disk</span>
-              <span class="font-semibold text-cyan-400" id="disk-usage">0.00%</span>
+              <span class="font-semibold text-cyan-400" id="disk-usage">0%</span>
             </div>
             <div class="w-full bg-slate-700 rounded-full h-2.5">
               <div class="bg-cyan-500 h-2.5 rounded-full progress-bar" id="disk-progress" style="width: 0%;"></div>
@@ -202,7 +202,7 @@
         </button>
         <div class="space-y-2 text-slate-300 text-lg sans-fallback">
             <div class="flex justify-between items-center"><span class="font-semibold">Ping:</span> <strong id="ping-result" class="text-white">-</strong></div>
-            <div class="flex justify-between items-center"><span class="font-semibold">Location:</span> <strong id="server-location" class="text-white sans-fallback text-right">--</strong></div>
+            <div class="flex justify-between items-center"><span class="font-semibold">Location:</span> <strong id="server-location" class="text-white sans-fallback">--</strong></div>
             <div class="flex justify-between items-center">
                 <span class="font-semibold">Status:</span>
                 <div class="flex items-center gap-2">
@@ -300,21 +300,13 @@
       try {
         const res = await fetch("/server-status");
         const data = await res.json();
-        
-        // --- FIX: Display usage with two decimal places for higher precision ---
-        const cpuUsage = parseFloat(data.cpu).toFixed(2);
-        const memUsage = parseFloat(data.ram).toFixed(2);
-        const diskUsage = parseFloat(data.disk).toFixed(2);
+        document.getElementById("cpu-usage").textContent = `${data.cpu}%`;
+        document.getElementById("memory-usage").textContent = `${data.ram}%`;
+        document.getElementById("disk-usage").textContent = `${data.disk}%`;
 
-        document.getElementById("cpu-usage").textContent = `${cpuUsage}%`;
-        document.getElementById("memory-usage").textContent = `${memUsage}%`;
-        document.getElementById("disk-usage").textContent = `${diskUsage}%`;
-
-        document.getElementById("cpu-progress").style.width = `${cpuUsage}%`;
-        document.getElementById("memory-progress").style.width = `${memUsage}%`;
-        document.getElementById("disk-progress").style.width = `${diskUsage}%`;
-        // --- END FIX ---
-
+        document.getElementById("cpu-progress").style.width = `${data.cpu}%`;
+        document.getElementById("memory-progress").style.width = `${data.ram}%`;
+        document.getElementById("disk-progress").style.width = `${data.disk}%`;
       } catch (e) {
         console.error("Status fetch failed");
       }
@@ -328,26 +320,37 @@
         const loc = await res.json();
         
         // Base logic to determine the location text
-        let locationText = loc.country || "Unknown";
-        if (loc.city && loc.country && loc.city.toLowerCase() !== loc.country.toLowerCase()) {
-            locationText = `${loc.city}, ${loc.country}`;
+        let locationText = `${loc.city}, ${loc.country}`;
+        if (loc.city && loc.country && loc.city.toLowerCase() === loc.country.toLowerCase()) {
+            locationText = loc.country;
         }
 
-        // NEW, FINAL, ROBUST METHOD for displaying the flag.
-        // This relies on your server providing a 'country_code' (e.g., "SG", "US", "LK")
-        if (loc.country_code && typeof loc.country_code === 'string' && loc.country_code.length === 2) {
-            const flagUrl = `https://flagcdn.com/h24/${loc.country_code.toLowerCase()}.png`;
+        // New, more robust method for displaying the flag
+        // IMPORTANT: This still requires your server to provide a 'country_code' (e.g., "SG", "US")
+        if (loc.country_code) {
+            const flagUrl = `https://flagcdn.com/w40/${loc.country_code.toLowerCase()}.png`;
             
-            // This is a more direct way to build the HTML, which is more reliable.
-            locationEl.innerHTML = `
-                <span class="align-middle">${locationText}</span>
-                <img src="${flagUrl}" 
-                     alt="${loc.country}" 
-                     class="inline-block h-5 w-auto ml-2 align-middle"
-                     onerror="this.style.display='none'">
-            `;
+            // Create elements manually to ensure they render correctly
+            const flagImg = document.createElement('img');
+            flagImg.src = flagUrl;
+            flagImg.alt = loc.country;
+            flagImg.className = "inline-block h-5 w-auto mr-2 align-middle";
+            
+            const textSpan = document.createElement('span');
+            textSpan.className = "align-middle";
+            textSpan.textContent = locationText;
+
+            // Clear the element and add the new content
+            locationEl.innerHTML = ''; 
+            locationEl.appendChild(flagImg);
+            locationEl.appendChild(textSpan);
+
+            // Hide the image if it fails to load, preventing a broken image icon
+            flagImg.onerror = () => { 
+                locationEl.textContent = locationText;
+            };
         } else {
-            // Fallback to text only if no country_code is provided. This is the safe option.
+            // Fallback to text only if no country_code is provided
             locationEl.textContent = locationText;
         }
       } catch {
