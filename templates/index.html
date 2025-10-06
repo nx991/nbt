@@ -320,16 +320,17 @@
         const loc = await res.json();
         
         // Base logic to determine the location text
-        let locationText = loc.country;
+        let locationText = loc.country || "Unknown";
         if (loc.city && loc.country && loc.city.toLowerCase() !== loc.country.toLowerCase()) {
             locationText = `${loc.city}, ${loc.country}`;
         }
 
-        // NEW, FINAL METHOD for displaying the flag.
-        // This requires your server to provide a 'country_code' (e.g., "SG", "US")
+        // NEW, FINAL, ROBUST METHOD for displaying the flag.
+        // This relies on your server providing a 'country_code' (e.g., "SG", "US", "LK")
         if (loc.country_code && typeof loc.country_code === 'string' && loc.country_code.length === 2) {
             const flagUrl = `https://flagcdn.com/h24/${loc.country_code.toLowerCase()}.png`;
             
+            // This is a more direct way to build the HTML, which is more reliable.
             locationEl.innerHTML = `
                 <span class="align-middle">${locationText}</span>
                 <img src="${flagUrl}" 
@@ -338,7 +339,7 @@
                      onerror="this.style.display='none'">
             `;
         } else {
-            // Fallback to text only if no country_code is provided
+            // Fallback to text only if no country_code is provided. This is the safe option.
             locationEl.textContent = locationText;
         }
       } catch {
