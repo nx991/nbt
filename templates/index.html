@@ -79,7 +79,7 @@
     }
     
     .progress-bar {
-        transition: width 1s ease-out;
+        transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     }
     
     .safeguard-content {
@@ -280,21 +280,6 @@
 
     // --- ALL SERVER INTERACTION LOGIC IS PRESERVED ---
 
-    // --- NEW: Helper function for smooth number animation ---
-    function animateValue(element, start, end, duration) {
-        let startTimestamp = null;
-        const step = (timestamp) => {
-            if (!startTimestamp) startTimestamp = timestamp;
-            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-            const currentValue = progress * (end - start) + start;
-            element.textContent = `${currentValue.toFixed(2)}%`;
-            if (progress < 1) {
-                window.requestAnimationFrame(step);
-            }
-        };
-        window.requestAnimationFrame(step);
-    }
-
     // Ping logic
     document.getElementById("ping-button").addEventListener("click", async () => {
       const start = Date.now();
@@ -310,35 +295,24 @@
       }
     });
 
-    // Server data updates
+    // Server data updates (from oldindex.html)
     setInterval(async () => {
       try {
         const res = await fetch("/server-status");
         const data = await res.json();
         
-        // --- FIX: Animate CPU and Memory for a smoother, high-precision feel ---
-        const cpuUsageEl = document.getElementById("cpu-usage");
-        const memUsageEl = document.getElementById("memory-usage");
-        const diskUsageEl = document.getElementById("disk-usage");
+        // --- FIX: Display usage with two decimal places for higher precision ---
+        const cpuUsage = parseFloat(data.cpu).toFixed(2);
+        const memUsage = parseFloat(data.ram).toFixed(2);
+        const diskUsage = parseFloat(data.disk).toFixed(2);
 
-        const oldCpu = parseFloat(cpuUsageEl.textContent) || 0;
-        const oldMem = parseFloat(memUsageEl.textContent) || 0;
-        
-        const newCpu = parseFloat(data.cpu);
-        const newMem = parseFloat(data.ram);
-        const newDisk = parseFloat(data.disk);
+        document.getElementById("cpu-usage").textContent = `${cpuUsage}%`;
+        document.getElementById("memory-usage").textContent = `${memUsage}%`;
+        document.getElementById("disk-usage").textContent = `${diskUsage}%`;
 
-        // Animate CPU and Memory for a smoother feel over 1 second
-        animateValue(cpuUsageEl, oldCpu, newCpu, 1000);
-        animateValue(memUsageEl, oldMem, newMem, 1000);
-
-        // Disk can still be a direct update as it's less volatile
-        diskUsageEl.textContent = `${newDisk.toFixed(2)}%`;
-
-        // Update progress bars (these already have a CSS transition)
-        document.getElementById("cpu-progress").style.width = `${newCpu}%`;
-        document.getElementById("memory-progress").style.width = `${newMem}%`;
-        document.getElementById("disk-progress").style.width = `${newDisk}%`;
+        document.getElementById("cpu-progress").style.width = `${cpuUsage}%`;
+        document.getElementById("memory-progress").style.width = `${memUsage}%`;
+        document.getElementById("disk-progress").style.width = `${diskUsage}%`;
         // --- END FIX ---
 
       } catch (e) {
@@ -353,13 +327,18 @@
         const res = await fetch("/server-location");
         const loc = await res.json();
         
+        // Base logic to determine the location text
         let locationText = loc.country || "Unknown";
         if (loc.city && loc.country && loc.city.toLowerCase() !== loc.country.toLowerCase()) {
             locationText = `${loc.city}, ${loc.country}`;
         }
 
+        // NEW, FINAL, ROBUST METHOD for displaying the flag.
+        // This relies on your server providing a 'country_code' (e.g., "SG", "US", "LK")
         if (loc.country_code && typeof loc.country_code === 'string' && loc.country_code.length === 2) {
             const flagUrl = `https://flagcdn.com/h24/${loc.country_code.toLowerCase()}.png`;
+            
+            // This is a more direct way to build the HTML, which is more reliable.
             locationEl.innerHTML = `
                 <span class="align-middle">${locationText}</span>
                 <img src="${flagUrl}" 
@@ -368,6 +347,7 @@
                      onerror="this.style.display='none'">
             `;
         } else {
+            // Fallback to text only if no country_code is provided. This is the safe option.
             locationEl.textContent = locationText;
         }
       } catch {
@@ -392,6 +372,7 @@
         const r = await fetch("/net-live");
         const data = await r.json();
         if (data && data.total) {
+          // No animation for network traffic, direct update
           document.getElementById("download-traffic").textContent = data.total.rx_mbps.toFixed(2) + " Mbps";
           document.getElementById("upload-traffic").textContent   = data.total.tx_mbps.toFixed(2) + " Mbps";
         }
