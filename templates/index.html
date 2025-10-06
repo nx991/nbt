@@ -382,8 +382,8 @@
             const newDownload = data.total.rx_mbps;
             const newUpload = data.total.tx_mbps;
 
-            animateFloatValue(downloadEl, oldDownload, newDownload, 1900, 'Mbps');
-            animateFloatValue(uploadEl, oldUpload, newUpload, 1900, 'Mbps');
+            animateFloatValue(downloadEl, oldDownload, newDownload, 500, 'Mbps');
+            animateFloatValue(uploadEl, oldUpload, newUpload, 500, 'Mbps');
         }
       } catch (e) {
         // Ignore transient errors
