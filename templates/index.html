@@ -79,7 +79,7 @@
     }
     
     .progress-bar {
-        transition: width 0.5s ease-in-out;
+        transition: width 1.9s ease-in-out;
     }
     
     .safeguard-content {
@@ -280,6 +280,21 @@
 
     // --- ALL SERVER INTERACTION LOGIC IS PRESERVED ---
 
+    // --- NEW: Helper function for smooth number animation ---
+    function animateValue(element, start, end, duration) {
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            const currentValue = progress * (end - start) + start;
+            element.textContent = `${currentValue.toFixed(2)}%`;
+            if (progress < 1) {
+                window.requestAnimationFrame(step);
+            }
+        };
+        window.requestAnimationFrame(step);
+    }
+
     // Ping logic
     document.getElementById("ping-button").addEventListener("click", async () => {
       const start = Date.now();
@@ -301,14 +316,24 @@
         const res = await fetch("/server-status");
         const data = await res.json();
         
-        // --- FIX: Remove counting animation for an instant, quick update ---
-        const newCpu = parseFloat(data.cpu).toFixed(2);
-        const newMem = parseFloat(data.ram).toFixed(2);
-        const newDisk = parseFloat(data.disk).toFixed(2);
+        // --- FIX: Animate CPU and Memory for a smoother, high-precision feel ---
+        const cpuUsageEl = document.getElementById("cpu-usage");
+        const memUsageEl = document.getElementById("memory-usage");
+        const diskUsageEl = document.getElementById("disk-usage");
 
-        document.getElementById("cpu-usage").textContent = `${newCpu}%`;
-        document.getElementById("memory-usage").textContent = `${newMem}%`;
-        document.getElementById("disk-usage").textContent = `${newDisk}%`;
+        const oldCpu = parseFloat(cpuUsageEl.textContent) || 0;
+        const oldMem = parseFloat(memUsageEl.textContent) || 0;
+        
+        const newCpu = parseFloat(data.cpu);
+        const newMem = parseFloat(data.ram);
+        const newDisk = parseFloat(data.disk);
+
+        // Animate CPU and Memory for a smoother feel over a longer duration
+        animateValue(cpuUsageEl, oldCpu, newCpu, 1900);
+        animateValue(memUsageEl, oldMem, newMem, 1900);
+
+        // Disk can still be a direct update as it's less volatile
+        diskUsageEl.textContent = `${newDisk.toFixed(2)}%`;
 
         // Update progress bars (these already have a CSS transition)
         document.getElementById("cpu-progress").style.width = `${newCpu}%`;
