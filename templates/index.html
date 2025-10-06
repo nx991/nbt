@@ -314,27 +314,43 @@
     
     // Fetch server location
     (async () => {
+      const locationEl = document.getElementById("server-location");
       try {
         const res = await fetch("/server-location");
         const loc = await res.json();
-        const locationEl = document.getElementById("server-location");
         
-        // This is the original, simple logic for displaying the location text.
+        // Base logic to determine the location text
         let locationText = `${loc.city}, ${loc.country}`;
-
-        // This prevents showing duplicate names e.g., "Singapore, Singapore"
         if (loc.city && loc.country && loc.city.toLowerCase() === loc.country.toLowerCase()) {
             locationText = loc.country;
         }
 
-        // Safely check if the country_code is available before trying to show a flag
-        // NOTE: For the flag to appear, your "/server-location" endpoint must provide a "country_code" (e.g., "SG").
+        // New, more robust method for displaying the flag
+        // IMPORTANT: This still requires your server to provide a 'country_code' (e.g., "SG", "US")
         if (loc.country_code) {
-            const flagUrl = `https://flagcdn.com/h24/${loc.country_code.toLowerCase()}.png`;
-            const flagHTML = `<img src="${flagUrl}" alt="${loc.country}" class="inline-block h-5 w-auto mr-2 align-middle" onerror="this.style.display='none'">`;
-            locationEl.innerHTML = `${flagHTML}<span class="align-middle">${locationText}</span>`;
+            const flagUrl = `https://flagcdn.com/w40/${loc.country_code.toLowerCase()}.png`;
+            
+            // Create elements manually to ensure they render correctly
+            const flagImg = document.createElement('img');
+            flagImg.src = flagUrl;
+            flagImg.alt = loc.country;
+            flagImg.className = "inline-block h-5 w-auto mr-2 align-middle";
+            
+            const textSpan = document.createElement('span');
+            textSpan.className = "align-middle";
+            textSpan.textContent = locationText;
+
+            // Clear the element and add the new content
+            locationEl.innerHTML = ''; 
+            locationEl.appendChild(flagImg);
+            locationEl.appendChild(textSpan);
+
+            // Hide the image if it fails to load, preventing a broken image icon
+            flagImg.onerror = () => { 
+                locationEl.textContent = locationText;
+            };
         } else {
-            // If no country_code, just show the text without a flag
+            // Fallback to text only if no country_code is provided
             locationEl.textContent = locationText;
         }
       } catch {
