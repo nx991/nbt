@@ -164,7 +164,7 @@
           <div>
             <div class="flex justify-between mb-1 text-lg">
               <span class="font-semibold text-slate-300">CPU</span>
-              <span class="font-semibold text-cyan-400" id="cpu-usage">0%</span>
+              <span class="font-semibold text-cyan-400" id="cpu-usage">0.00%</span>
             </div>
             <div class="w-full bg-slate-700 rounded-full h-2.5">
               <div class="bg-cyan-500 h-2.5 rounded-full progress-bar" id="cpu-progress" style="width: 0%;"></div>
@@ -173,7 +173,7 @@
           <div>
             <div class="flex justify-between mb-1 text-lg">
               <span class="font-semibold text-slate-300">Memory</span>
-              <span class="font-semibold text-cyan-400" id="memory-usage">0%</span>
+              <span class="font-semibold text-cyan-400" id="memory-usage">0.00%</span>
             </div>
             <div class="w-full bg-slate-700 rounded-full h-2.5">
               <div class="bg-cyan-500 h-2.5 rounded-full progress-bar" id="memory-progress" style="width: 0%;"></div>
@@ -182,7 +182,7 @@
           <div>
             <div class="flex justify-between mb-1 text-lg">
               <span class="font-semibold text-slate-300">Disk</span>
-              <span class="font-semibold text-cyan-400" id="disk-usage">0%</span>
+              <span class="font-semibold text-cyan-400" id="disk-usage">0.00%</span>
             </div>
             <div class="w-full bg-slate-700 rounded-full h-2.5">
               <div class="bg-cyan-500 h-2.5 rounded-full progress-bar" id="disk-progress" style="width: 0%;"></div>
@@ -300,13 +300,21 @@
       try {
         const res = await fetch("/server-status");
         const data = await res.json();
-        document.getElementById("cpu-usage").textContent = `${data.cpu}%`;
-        document.getElementById("memory-usage").textContent = `${data.ram}%`;
-        document.getElementById("disk-usage").textContent = `${data.disk}%`;
+        
+        // --- FIX: Display usage with two decimal places for higher precision ---
+        const cpuUsage = parseFloat(data.cpu).toFixed(2);
+        const memUsage = parseFloat(data.ram).toFixed(2);
+        const diskUsage = parseFloat(data.disk).toFixed(2);
 
-        document.getElementById("cpu-progress").style.width = `${data.cpu}%`;
-        document.getElementById("memory-progress").style.width = `${data.ram}%`;
-        document.getElementById("disk-progress").style.width = `${data.disk}%`;
+        document.getElementById("cpu-usage").textContent = `${cpuUsage}%`;
+        document.getElementById("memory-usage").textContent = `${memUsage}%`;
+        document.getElementById("disk-usage").textContent = `${diskUsage}%`;
+
+        document.getElementById("cpu-progress").style.width = `${cpuUsage}%`;
+        document.getElementById("memory-progress").style.width = `${memUsage}%`;
+        document.getElementById("disk-progress").style.width = `${diskUsage}%`;
+        // --- END FIX ---
+
       } catch (e) {
         console.error("Status fetch failed");
       }
