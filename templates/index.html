@@ -164,28 +164,28 @@
           <div>
             <div class="flex justify-between mb-1 text-lg">
               <span class="font-semibold text-slate-300">CPU</span>
-              <span class="font-semibold text-cyan-400" id="cpu-usage">25%</span>
+              <span class="font-semibold text-cyan-400" id="cpu-usage">0%</span>
             </div>
             <div class="w-full bg-slate-700 rounded-full h-2.5">
-              <div class="bg-cyan-500 h-2.5 rounded-full progress-bar" id="cpu-progress" style="width: 25%;"></div>
+              <div class="bg-cyan-500 h-2.5 rounded-full progress-bar" id="cpu-progress" style="width: 0%;"></div>
             </div>
           </div>
           <div>
             <div class="flex justify-between mb-1 text-lg">
               <span class="font-semibold text-slate-300">Memory</span>
-              <span class="font-semibold text-cyan-400" id="memory-usage">25%</span>
+              <span class="font-semibold text-cyan-400" id="memory-usage">0%</span>
             </div>
             <div class="w-full bg-slate-700 rounded-full h-2.5">
-              <div class="bg-cyan-500 h-2.5 rounded-full progress-bar" id="memory-progress" style="width: 25%;"></div>
+              <div class="bg-cyan-500 h-2.5 rounded-full progress-bar" id="memory-progress" style="width: 0%;"></div>
             </div>
           </div>
           <div>
             <div class="flex justify-between mb-1 text-lg">
               <span class="font-semibold text-slate-300">Disk</span>
-              <span class="font-semibold text-cyan-400" id="disk-usage">25%</span>
+              <span class="font-semibold text-cyan-400" id="disk-usage">0%</span>
             </div>
             <div class="w-full bg-slate-700 rounded-full h-2.5">
-              <div class="bg-cyan-500 h-2.5 rounded-full progress-bar" id="disk-progress" style="width: 25%;"></div>
+              <div class="bg-cyan-500 h-2.5 rounded-full progress-bar" id="disk-progress" style="width: 0%;"></div>
             </div>
           </div>
         </div>
@@ -223,8 +223,8 @@
           <span>Network Traffic</span>
         </h3>
         <div class="space-y-3 text-slate-300 text-xl sans-fallback">
-          <p class="flex justify-between items-center">Download: <strong id="download-traffic" class="text-white font-semibold">10 Mbps</strong></p>
-          <p class="flex justify-between items-center">Upload: <strong id="upload-traffic" class="text-white font-semibold">2 Mbps</strong></p>
+          <p class="flex justify-between items-center">Download: <strong id="download-traffic" class="text-white font-semibold">0 Mbps</strong></p>
+          <p class="flex justify-between items-center">Upload: <strong id="upload-traffic" class="text-white font-semibold">0 Mbps</strong></p>
           <div class="border-t border-slate-700 my-2"></div>
           <p class="flex justify-between items-center">Uptime: <strong id="uptime" class="text-white font-semibold">99.99%</strong></p>
         </div>
@@ -329,21 +329,31 @@
       }
     });
 
-    // Server data updates
+    // --- Server data updates ---
+    // A variable to store the initial disk usage so it doesn't fluctuate.
+    let initialDiskUsage = null;
+
     setInterval(async () => {
       try {
         const res = await fetch("/server-status");
         const data = await res.json();
         
+        // CPU and Memory are volatile and should update live.
         animateValue(document.getElementById("cpu-usage"), parseInt(document.getElementById("cpu-usage").textContent) || 0, data.cpu, 500);
-        animateValue(document.getElementById("memory-usage"), parseInt(document.getElementById("memory-usage").textContent) || 0, data.ram, 500);
-        animateValue(document.getElementById("disk-usage"), parseInt(document.getElementById("disk-usage").textContent) || 0, data.disk, 500);
-
         document.getElementById("cpu-progress").style.width = `${data.cpu}%`;
+        
+        animateValue(document.getElementById("memory-usage"), parseInt(document.getElementById("memory-usage").textContent) || 0, data.ram, 500);
         document.getElementById("memory-progress").style.width = `${data.ram}%`;
-        document.getElementById("disk-progress").style.width = `${data.disk}%`;
+
+        // For Disk, we only set it the first time to prevent visual fluctuations.
+        if (initialDiskUsage === null) {
+            initialDiskUsage = data.disk;
+            animateValue(document.getElementById("disk-usage"), parseInt(document.getElementById("disk-usage").textContent) || 0, initialDiskUsage, 500);
+            document.getElementById("disk-progress").style.width = `${initialDiskUsage}%`;
+        }
+        
       } catch (e) {
-        console.error("Status fetch failed");
+        console.error("Status fetch failed", e);
       }
     }, 2000);
 
@@ -384,24 +394,6 @@
     }
     refreshNet();
     setInterval(refreshNet, 2000);
-    
-    // OPTIONAL: Per-connection top talkers (requires /net-connections + sudoers)
-    /*
-    async function refreshConns(){
-      try {
-        const r = await fetch("/net-connections");
-        const data = await r.json();
-        if (data.available && data.rows?.length) {
-          // Example of rendering:
-          // document.getElementById("top-conns").innerHTML = data.rows.slice(0,5).map(
-          //   x => \`<div class="metric"><div class="label"><i class="fas fa-terminal"></i> \${x.process}</div>
-          //           <div class="badge">\${x.rx_mbps}/\${x.tx_mbps} Mbps</div></div>\`
-          // ).join("");
-        }
-      } catch(e){}
-    }
-    // setInterval(refreshConns, 4000);
-    */
 
   </script>
 
