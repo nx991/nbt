@@ -79,7 +79,7 @@
     }
     
     .progress-bar {
-        transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: width 0.5s ease-in-out;
     }
     
     .safeguard-content {
@@ -164,7 +164,7 @@
           <div>
             <div class="flex justify-between mb-1 text-lg">
               <span class="font-semibold text-slate-300">CPU</span>
-              <span class="font-semibold text-cyan-400" id="cpu-usage">0%</span>
+              <span class="font-semibold text-cyan-400" id="cpu-usage">0.00%</span>
             </div>
             <div class="w-full bg-slate-700 rounded-full h-2.5">
               <div class="bg-cyan-500 h-2.5 rounded-full progress-bar" id="cpu-progress" style="width: 0%;"></div>
@@ -173,7 +173,7 @@
           <div>
             <div class="flex justify-between mb-1 text-lg">
               <span class="font-semibold text-slate-300">Memory</span>
-              <span class="font-semibold text-cyan-400" id="memory-usage">0%</span>
+              <span class="font-semibold text-cyan-400" id="memory-usage">0.00%</span>
             </div>
             <div class="w-full bg-slate-700 rounded-full h-2.5">
               <div class="bg-cyan-500 h-2.5 rounded-full progress-bar" id="memory-progress" style="width: 0%;"></div>
@@ -182,7 +182,7 @@
           <div>
             <div class="flex justify-between mb-1 text-lg">
               <span class="font-semibold text-slate-300">Disk</span>
-              <span class="font-semibold text-cyan-400" id="disk-usage">0%</span>
+              <span class="font-semibold text-cyan-400" id="disk-usage">0.00%</span>
             </div>
             <div class="w-full bg-slate-700 rounded-full h-2.5">
               <div class="bg-cyan-500 h-2.5 rounded-full progress-bar" id="disk-progress" style="width: 0%;"></div>
@@ -202,7 +202,7 @@
         </button>
         <div class="space-y-2 text-slate-300 text-lg sans-fallback">
             <div class="flex justify-between items-center"><span class="font-semibold">Ping:</span> <strong id="ping-result" class="text-white">-</strong></div>
-            <div class="flex justify-between items-center"><span class="font-semibold">Location:</span> <strong id="server-location" class="text-white">--</strong></div>
+            <div class="flex justify-between items-center"><span class="font-semibold">Location:</span> <strong id="server-location" class="text-white sans-fallback text-right">--</strong></div>
             <div class="flex justify-between items-center">
                 <span class="font-semibold">Status:</span>
                 <div class="flex items-center gap-2">
@@ -223,8 +223,8 @@
           <span>Network Traffic</span>
         </h3>
         <div class="space-y-3 text-slate-300 text-xl sans-fallback">
-          <p class="flex justify-between items-center">Download: <strong id="download-traffic" class="text-white font-semibold">0 Mbps</strong></p>
-          <p class="flex justify-between items-center">Upload: <strong id="upload-traffic" class="text-white font-semibold">0 Mbps</strong></p>
+          <p class="flex justify-between items-center">Download: <strong id="download-traffic" class="text-white font-semibold">0.00 Mbps</strong></p>
+          <p class="flex justify-between items-center">Upload: <strong id="upload-traffic" class="text-white font-semibold">0.00 Mbps</strong></p>
           <div class="border-t border-slate-700 my-2"></div>
           <p class="flex justify-between items-center">Uptime: <strong id="uptime" class="text-white font-semibold">99.99%</strong></p>
         </div>
@@ -278,41 +278,22 @@
       });
     });
 
-    // Animate integer values (e.g., percentages)
-    function animateValue(obj, start, end, duration) {
-      let startTimestamp = null;
-      const step = (timestamp) => {
-        if (!startTimestamp) startTimestamp = timestamp;
-        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-        const currentValue = Math.floor(progress * (end - start) + start);
-        obj.innerHTML = `${currentValue}%`;
-        if (progress < 1) {
-          window.requestAnimationFrame(step);
-        } else {
-            obj.innerHTML = `${end}%`; // Ensure it ends on the exact value
-        }
-      };
-      window.requestAnimationFrame(step);
-    }
-
-    // Animate float values (e.g., Mbps)
-    function animateFloatValue(obj, start, end, duration) {
+    // --- ALL SERVER INTERACTION LOGIC IS PRESERVED ---
+    
+    // --- Helper function for smooth number animation (for network traffic only) ---
+    function animateFloatValue(element, start, end, duration, unit) {
         let startTimestamp = null;
         const step = (timestamp) => {
             if (!startTimestamp) startTimestamp = timestamp;
             const progress = Math.min((timestamp - startTimestamp) / duration, 1);
             const currentValue = progress * (end - start) + start;
-            obj.innerHTML = `${currentValue.toFixed(2)} Mbps`;
+            element.textContent = `${currentValue.toFixed(2)} ${unit}`;
             if (progress < 1) {
                 window.requestAnimationFrame(step);
-            } else {
-                obj.innerHTML = `${end.toFixed(2)} Mbps`; // Ensure it ends on the exact value
             }
         };
         window.requestAnimationFrame(step);
     }
-    
-    // --- ALL SERVER INTERACTION LOGIC IS PRESERVED ---
 
     // Ping logic
     document.getElementById("ping-button").addEventListener("click", async () => {
@@ -329,31 +310,58 @@
       }
     });
 
-    // Server data updates (from oldindex.html)
+    // Server data updates
     setInterval(async () => {
       try {
         const res = await fetch("/server-status");
         const data = await res.json();
-        document.getElementById("cpu-usage").textContent = `${data.cpu}%`;
-        document.getElementById("memory-usage").textContent = `${data.ram}%`;
-        document.getElementById("disk-usage").textContent = `${data.disk}%`;
+        
+        // Instant, high-precision update for server stats
+        const newCpu = parseFloat(data.cpu).toFixed(2);
+        const newMem = parseFloat(data.ram).toFixed(2);
+        const newDisk = parseFloat(data.disk).toFixed(2);
 
-        document.getElementById("cpu-progress").style.width = `${data.cpu}%`;
-        document.getElementById("memory-progress").style.width = `${data.ram}%`;
-        document.getElementById("disk-progress").style.width = `${data.disk}%`;
+        document.getElementById("cpu-usage").textContent = `${newCpu}%`;
+        document.getElementById("memory-usage").textContent = `${newMem}%`;
+        document.getElementById("disk-usage").textContent = `${newDisk}%`;
+
+        // Update progress bars (these have a CSS transition for smoothness)
+        document.getElementById("cpu-progress").style.width = `${newCpu}%`;
+        document.getElementById("memory-progress").style.width = `${newMem}%`;
+        document.getElementById("disk-progress").style.width = `${newDisk}%`;
+
       } catch (e) {
         console.error("Status fetch failed");
       }
     }, 2000);
-
+    
     // Fetch server location
     (async () => {
+      const locationEl = document.getElementById("server-location");
       try {
         const res = await fetch("/server-location");
         const loc = await res.json();
-        document.getElementById("server-location").textContent = `${loc.city}, ${loc.country}`;
+        
+        // FIX for duplicate location name
+        let locationText = loc.country || "Unknown";
+        if (loc.city && loc.country && loc.city.toLowerCase() !== loc.country.toLowerCase()) {
+            locationText = `${loc.city}, ${loc.country}`;
+        }
+
+        if (loc.country_code && typeof loc.country_code === 'string' && loc.country_code.length === 2) {
+            const flagUrl = `https://flagcdn.com/h24/${loc.country_code.toLowerCase()}.png`;
+            locationEl.innerHTML = `
+                <span class="align-middle">${locationText}</span>
+                <img src="${flagUrl}" 
+                     alt="${loc.country}" 
+                     class="inline-block h-5 w-auto ml-2 align-middle"
+                     onerror="this.style.display='none'">
+            `;
+        } else {
+            locationEl.textContent = locationText;
+        }
       } catch {
-        document.getElementById("server-location").textContent = "Unavailable";
+        locationEl.textContent = "Unavailable";
       }
     })();
 
@@ -368,14 +376,23 @@
       }
     })();
 
-    // Live network traffic
+    // Live network traffic with smooth animation
     async function refreshNet() {
       try {
         const r = await fetch("/net-live");
         const data = await r.json();
         if (data && data.total) {
-          animateFloatValue(document.getElementById("download-traffic"), parseFloat(document.getElementById("download-traffic").textContent) || 0, data.total.rx_mbps, 500);
-          animateFloatValue(document.getElementById("upload-traffic"), parseFloat(document.getElementById("upload-traffic").textContent) || 0, data.total.tx_mbps, 500);
+            const downloadEl = document.getElementById("download-traffic");
+            const uploadEl = document.getElementById("upload-traffic");
+
+            const oldDownload = parseFloat(downloadEl.textContent) || 0;
+            const oldUpload = parseFloat(uploadEl.textContent) || 0;
+
+            const newDownload = data.total.rx_mbps;
+            const newUpload = data.total.tx_mbps;
+
+            animateFloatValue(downloadEl, oldDownload, newDownload, 1900, 'Mbps');
+            animateFloatValue(uploadEl, oldUpload, newUpload, 1900, 'Mbps');
         }
       } catch (e) {
         // Ignore transient errors
