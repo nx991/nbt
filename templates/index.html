@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=-width, initial-scale=1.0"/>
   <title>NIMNABRO VPN</title>
   <link rel="icon" type="image/png" href="https://www.dropbox.com/scl/fi/us9bg2xv9agp03izul2yq/channels4_profile_1-modified-1.png?rlkey=224q0p35gk2jum9rp40vvvpxc&raw=1">
   
@@ -41,17 +41,43 @@
         }
     }
 
+    /* --- MODIFICATION START: Subtitle Animation --- */
+    @keyframes subtitle-glow {
+        0%, 100% {
+            text-shadow: 0 0 6px rgba(236, 252, 255, 0.3), 0 1px 4px rgba(0, 0, 0, 0.5);
+            color: #e2e8f0; /* slate-200 */
+        }
+        50% {
+            text-shadow: 0 0 10px rgba(236, 252, 255, 0.5), 0 1px 4px rgba(0, 0, 0, 0.5);
+            color: #f1f5f9; /* slate-100 */
+        }
+    }
+    /* --- MODIFICATION END --- */
+
     body {
       font-family: 'Russo One', sans-serif;
       color: #cbd5e1; /* slate-300 */
-      background: linear-gradient(-45deg, #0f172a, #1e293b, #0369a1, #0891b2);
-      background-size: 400% 400%;
-      animation: gradientShift 25s ease infinite;
       letter-spacing: 0.5px; /* Adjust spacing for the new font */
     }
+
+    #bg-video {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: -100;
+      filter: blur(10px); /* Adjusted blur */
+      -webkit-filter: blur(10px); /* Adjusted blur */
+    }
     .card {
-      background-color: #1e293b; /* slate-800 */
-      border: 1px solid #334155; /* slate-700 */
+      /* --- MODIFICATION START: Dark Glass UI --- */
+      background-color: rgba(10, 10, 20, 0.55); /* Dark transparent background */
+      border: 1px solid rgba(255, 255, 255, 0.1); /* Subtle border */
+      /* --- MODIFICATION END --- */
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       transition: all 0.3s ease;
       position: relative; 
       overflow: hidden; 
@@ -60,6 +86,9 @@
       transform: translateY(-5px);
       box-shadow: 0 10px 20px rgba(6, 182, 212, 0.1);
       border-color: #06b6d4; /* cyan-500 */
+      /* --- MODIFICATION START: Dark Glass UI Hover --- */
+      background-color: rgba(10, 10, 20, 0.75); /* Slightly less transparent on hover */
+      /* --- MODIFICATION END --- */
     }
 
     .card::after {
@@ -92,8 +121,16 @@
         -webkit-background-clip: text;
         background-clip: text;
         background-size: 250% auto;
-        animation: text-light-sweep 5s ease-in-out infinite;
+        /* --- MODIFICATION START: Smoother Animation --- */
+        animation: text-light-sweep 10s linear infinite;
+        /* --- MODIFICATION END --- */
     }
+
+    /* --- MODIFICATION START: Animate Subtitle --- */
+    #main-header p {
+      animation: subtitle-glow 4s ease-in-out infinite;
+    }
+    /* --- MODIFICATION END --- */
 
     .animated-safeguard-text {
         animation: text-pulse 2.5s infinite ease-in-out;
@@ -109,6 +146,13 @@
       from { opacity: 0; transform: translateY(20px); }
       to { opacity: 1; transform: translateY(0); }
     }
+
+    /* --- MODIFICATION START: Loading Blur --- */
+    .loading-blur {
+      filter: blur(5px);
+      transition: filter 0.5s ease-out;
+    }
+    /* --- MODIFICATION END --- */
 
     /* Animation utility classes */
     .anim-fadeInDown {
@@ -126,9 +170,14 @@
     }
   </style>
 </head>
-<body class="antialiased">
+<body class="antialiased bg-slate-900">
 
-  <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+  <video autoplay muted loop id="bg-video">
+    <source src="https://files.catbox.moe/mj9qr1.mp4" type="video/mp4">
+    Your browser does not support HTML5 video.
+  </video>
+
+  <div class="container mx-auto p-4 sm:p-6 lg:p-8 relative z-10">
     <!-- Header -->
     <header id="main-header" class="text-center mb-10 opacity-0">
       <h1 class="text-6xl sm:text-7xl font-bold tracking-wider header-title">
@@ -147,7 +196,7 @@
           <span>User Usage</span>
         </h3>
         <form id="user-form" action="/usage" method="POST" class="flex flex-col gap-4">
-          <input type="text" name="user_input" placeholder="Enter User Name" required class="w-full bg-slate-700 border border-slate-600 rounded-lg p-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 sans-fallback text-base" />
+          <input type="text" name="user_input" placeholder="Enter User Name" required class="w-full bg-slate-700/80 border border-slate-600 rounded-lg p-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 sans-fallback text-base" />
           <button type="submit" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-200 active:scale-95 text-2xl">
             Check Usage
           </button>
@@ -164,29 +213,35 @@
           <div>
             <div class="flex justify-between mb-1 text-lg">
               <span class="font-semibold text-slate-300">CPU</span>
-              <span class="font-semibold text-cyan-400" id="cpu-usage">0.00%</span>
+              <span class="font-semibold text-cyan-400 loading-blur" id="cpu-usage">...</span>
             </div>
-            <div class="w-full bg-slate-700 rounded-full h-2.5">
+            <!-- --- MODIFICATION START: Add blur and ID --- -->
+            <div class="w-full bg-slate-700/80 rounded-full h-2.5 loading-blur" id="cpu-progress-wrapper">
               <div class="bg-cyan-500 h-2.5 rounded-full progress-bar" id="cpu-progress" style="width: 0%;"></div>
             </div>
+            <!-- --- MODIFICATION END --- -->
           </div>
           <div>
             <div class="flex justify-between mb-1 text-lg">
               <span class="font-semibold text-slate-300">Memory</span>
-              <span class="font-semibold text-cyan-400" id="memory-usage">0.00%</span>
+              <span class="font-semibold text-cyan-400 loading-blur" id="memory-usage">...</span>
             </div>
-            <div class="w-full bg-slate-700 rounded-full h-2.5">
+            <!-- --- MODIFICATION START: Add blur and ID --- -->
+            <div class="w-full bg-slate-700/80 rounded-full h-2.5 loading-blur" id="memory-progress-wrapper">
               <div class="bg-cyan-500 h-2.5 rounded-full progress-bar" id="memory-progress" style="width: 0%;"></div>
             </div>
+            <!-- --- MODIFICATION END --- -->
           </div>
           <div>
             <div class="flex justify-between mb-1 text-lg">
               <span class="font-semibold text-slate-300">Disk</span>
-              <span class="font-semibold text-cyan-400" id="disk-usage">0.00%</span>
+              <span class="font-semibold text-cyan-400 loading-blur" id="disk-usage">...</span>
             </div>
-            <div class="w-full bg-slate-700 rounded-full h-2.5">
+            <!-- --- MODIFICATION START: Add blur and ID --- -->
+            <div class="w-full bg-slate-700/80 rounded-full h-2.5 loading-blur" id="disk-progress-wrapper">
               <div class="bg-cyan-500 h-2.5 rounded-full progress-bar" id="disk-progress" style="width: 0%;"></div>
             </div>
+            <!-- --- MODIFICATION END --- -->
           </div>
         </div>
       </div>
@@ -197,7 +252,7 @@
           <i class="fas fa-wifi text-cyan-400 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6"></i>
           <span>Connection Test</span>
         </h3>
-        <button id="ping-button" class="w-full mb-4 bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 px-4 rounded-lg transition-all duration-200 active:scale-95 text-2xl">
+        <button id="ping-button" class="w-full mb-4 bg-slate-700/80 hover:bg-slate-600/80 text-white font-bold py-3 px-4 rounded-lg transition-all duration-200 active:scale-95 text-2xl">
           Ping Server
         </button>
         <div class="space-y-2 text-slate-300 text-lg sans-fallback">
@@ -223,8 +278,10 @@
           <span>Network Traffic</span>
         </h3>
         <div class="space-y-3 text-slate-300 text-xl sans-fallback">
-          <p class="flex justify-between items-center">Download: <strong id="download-traffic" class="text-white font-semibold">0.00 Mbps</strong></p>
-          <p class="flex justify-between items-center">Upload: <strong id="upload-traffic" class="text-white font-semibold">0.00 Mbps</strong></p>
+          <!-- --- MODIFICATION START: Add loading blur and placeholder text --- -->
+          <p class="flex justify-between items-center">Download: <strong id="download-traffic" class="text-white font-semibold loading-blur">...</strong></p>
+          <p class="flex justify-between items-center">Upload: <strong id="upload-traffic" class="text-white font-semibold loading-blur">...</strong></p>
+          <!-- --- MODIFICATION END --- -->
           <div class="border-t border-slate-700 my-2"></div>
           <p class="flex justify-between items-center">Uptime: <strong id="uptime" class="text-white font-semibold">99.99%</strong></p>
         </div>
@@ -251,7 +308,7 @@
     </div>
 
     <!-- Footer -->
-    <footer class="text-center mt-12 py-6 border-t border-slate-800 sans-fallback">
+    <footer class="text-center mt-12 py-6 border-t border-slate-700/50 sans-fallback">
       <p class="text-slate-500">&copy; 2025 NIMNABRO All rights reserved.</p>
       <div class="social-icons mt-4">
         <a href="https://guns.lol/nimnabro" target="_blank" class="text-slate-400 hover:text-cyan-400 transition-colors text-2xl">
@@ -323,9 +380,30 @@
         const newMem = parseFloat(data.ram).toFixed(2);
         const newDisk = parseFloat(data.disk).toFixed(2);
 
-        document.getElementById("cpu-usage").textContent = `${newCpu}%`;
-        document.getElementById("memory-usage").textContent = `${newMem}%`;
-        document.getElementById("disk-usage").textContent = `${newDisk}%`;
+        const cpuUsageEl = document.getElementById("cpu-usage");
+        const memoryUsageEl = document.getElementById("memory-usage");
+        const diskUsageEl = document.getElementById("disk-usage");
+
+        // --- MODIFICATION START: Get progress bar wrappers ---
+        const cpuProgressWrapper = document.getElementById("cpu-progress-wrapper");
+        const memoryProgressWrapper = document.getElementById("memory-progress-wrapper");
+        const diskProgressWrapper = document.getElementById("disk-progress-wrapper");
+        // --- MODIFICATION END ---
+
+        cpuUsageEl.textContent = `${newCpu}%`;
+        memoryUsageEl.textContent = `${newMem}%`;
+        diskUsageEl.textContent = `${newDisk}%`;
+
+        // --- MODIFICATION START: Remove loading blur ---
+        cpuUsageEl.classList.remove('loading-blur');
+        memoryUsageEl.classList.remove('loading-blur');
+        diskUsageEl.classList.remove('loading-blur');
+        // --- MODIFICATION START: Remove blur from progress bars ---
+        cpuProgressWrapper.classList.remove('loading-blur');
+        memoryProgressWrapper.classList.remove('loading-blur');
+        diskProgressWrapper.classList.remove('loading-blur');
+        // --- MODIFICATION END ---
+        // --- MODIFICATION END ---
 
         // Update progress bars (these have a CSS transition for smoothness)
         document.getElementById("cpu-progress").style.width = `${newCpu}%`;
@@ -367,7 +445,9 @@
       }
     })();
 
+    // --- MODIFICATION START: Add flag and update logic for network blur ---
     // Live network traffic with smooth animation
+    let isNetInitialLoad = true; // Flag for first data fetch
     async function refreshNet() {
       try {
         const r = await fetch("/net-live");
@@ -375,6 +455,12 @@
         if (data && data.total) {
             const downloadEl = document.getElementById("download-traffic");
             const uploadEl = document.getElementById("upload-traffic");
+
+            if (isNetInitialLoad) {
+                downloadEl.classList.remove('loading-blur');
+                uploadEl.classList.remove('loading-blur');
+                isNetInitialLoad = false;
+            }
 
             const oldDownload = parseFloat(downloadEl.textContent) || 0;
             const oldUpload = parseFloat(uploadEl.textContent) || 0;
@@ -391,6 +477,7 @@
     }
     refreshNet();
     setInterval(refreshNet, 2000);
+    // --- MODIFICATION END ---
 
   </script>
 
