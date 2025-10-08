@@ -652,40 +652,39 @@
         }
     });
 
-    // Server data updates
-    setInterval(async () => {
-      try {
-        const res = await fetch("/server-status");
-        const data = await res.json();
-        const now = Date.now();
-        
-        const newCpu = parseFloat(data.cpu);
-        const newMem = parseFloat(data.ram);
-        const newDisk = parseFloat(data.disk);
+    async function refreshServerStatus() {
+        try {
+            const res = await fetch("/server-status");
+            const data = await res.json();
+            const now = Date.now();
+            
+            const newCpu = parseFloat(data.cpu);
+            const newMem = parseFloat(data.ram);
+            const newDisk = parseFloat(data.disk);
 
-        document.getElementById("cpu-usage").textContent = `${newCpu.toFixed(2)}%`;
-        document.getElementById("memory-usage").textContent = `${newMem.toFixed(2)}%`;
-        document.getElementById("disk-usage").textContent = `${newDisk.toFixed(2)}%`;
+            document.getElementById("cpu-usage").textContent = `${newCpu.toFixed(2)}%`;
+            document.getElementById("memory-usage").textContent = `${newMem.toFixed(2)}%`;
+            document.getElementById("disk-usage").textContent = `${newDisk.toFixed(2)}%`;
 
-        document.getElementById("cpu-usage").classList.remove('loading-blur');
-        document.getElementById("memory-usage").classList.remove('loading-blur');
-        document.getElementById("disk-usage").classList.remove('loading-blur');
-        document.getElementById("cpu-progress-wrapper").classList.remove('loading-blur');
-        document.getElementById("memory-progress-wrapper").classList.remove('loading-blur');
-        document.getElementById("disk-progress-wrapper").classList.remove('loading-blur');
+            document.getElementById("cpu-usage").classList.remove('loading-blur');
+            document.getElementById("memory-usage").classList.remove('loading-blur');
+            document.getElementById("disk-usage").classList.remove('loading-blur');
+            document.getElementById("cpu-progress-wrapper").classList.remove('loading-blur');
+            document.getElementById("memory-progress-wrapper").classList.remove('loading-blur');
+            document.getElementById("disk-progress-wrapper").classList.remove('loading-blur');
 
-        document.getElementById("cpu-progress").style.width = `${newCpu}%`;
-        document.getElementById("memory-progress").style.width = `${newMem}%`;
-        document.getElementById("disk-progress").style.width = `${newDisk}%`;
-        
-        if (chartsInitialized) {
-            performanceData.cpu.push({ x: now, y: newCpu });
-            performanceData.memory.push({ x: now, y: newMem });
-            performanceData.disk.push({ x: now, y: newDisk });
-        }
+            document.getElementById("cpu-progress").style.width = `${newCpu}%`;
+            document.getElementById("memory-progress").style.width = `${newMem}%`;
+            document.getElementById("disk-progress").style.width = `${newDisk}%`;
+            
+            if (chartsInitialized) {
+                performanceData.cpu.push({ x: now, y: newCpu });
+                performanceData.memory.push({ x: now, y: newMem });
+                performanceData.disk.push({ x: now, y: newDisk });
+            }
 
-      } catch (e) { console.error("Status fetch failed"); }
-    }, 2000);
+        } catch (e) { console.error("Status fetch failed"); }
+    }
     
     // Fetch server location
     (async () => {
@@ -767,6 +766,7 @@
 
     // Master update interval
     setInterval(() => {
+        refreshServerStatus();
         refreshNet();
         refreshPing();
         updateCharts();
