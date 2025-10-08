@@ -215,33 +215,27 @@
               <span class="font-semibold text-slate-300">CPU</span>
               <span class="font-semibold text-cyan-400 loading-blur" id="cpu-usage">...</span>
             </div>
-            <!-- --- MODIFICATION START: Add blur and ID --- -->
             <div class="w-full bg-slate-700/80 rounded-full h-2.5 loading-blur" id="cpu-progress-wrapper">
               <div class="bg-cyan-500 h-2.5 rounded-full progress-bar" id="cpu-progress" style="width: 0%;"></div>
             </div>
-            <!-- --- MODIFICATION END --- -->
           </div>
           <div>
             <div class="flex justify-between mb-1 text-lg">
               <span class="font-semibold text-slate-300">Memory</span>
               <span class="font-semibold text-cyan-400 loading-blur" id="memory-usage">...</span>
             </div>
-            <!-- --- MODIFICATION START: Add blur and ID --- -->
             <div class="w-full bg-slate-700/80 rounded-full h-2.5 loading-blur" id="memory-progress-wrapper">
               <div class="bg-cyan-500 h-2.5 rounded-full progress-bar" id="memory-progress" style="width: 0%;"></div>
             </div>
-            <!-- --- MODIFICATION END --- -->
           </div>
           <div>
             <div class="flex justify-between mb-1 text-lg">
               <span class="font-semibold text-slate-300">Disk</span>
               <span class="font-semibold text-cyan-400 loading-blur" id="disk-usage">...</span>
             </div>
-            <!-- --- MODIFICATION START: Add blur and ID --- -->
             <div class="w-full bg-slate-700/80 rounded-full h-2.5 loading-blur" id="disk-progress-wrapper">
               <div class="bg-cyan-500 h-2.5 rounded-full progress-bar" id="disk-progress" style="width: 0%;"></div>
             </div>
-            <!-- --- MODIFICATION END --- -->
           </div>
         </div>
       </div>
@@ -277,13 +271,27 @@
           <i class="fas fa-exchange-alt text-cyan-400 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6"></i>
           <span>Network Traffic</span>
         </h3>
-        <div class="space-y-3 text-slate-300 text-xl sans-fallback">
-          <!-- --- MODIFICATION START: Add loading blur and placeholder text --- -->
-          <p class="flex justify-between items-center">Download: <strong id="download-traffic" class="text-white font-semibold loading-blur">...</strong></p>
-          <p class="flex justify-between items-center">Upload: <strong id="upload-traffic" class="text-white font-semibold loading-blur">...</strong></p>
-          <!-- --- MODIFICATION END --- -->
-          <div class="border-t border-slate-700 my-2"></div>
-          <p class="flex justify-between items-center">Uptime: <strong id="uptime" class="text-white font-semibold">99.99%</strong></p>
+        <div class="space-y-4 sans-fallback">
+          <div>
+            <div class="flex justify-between mb-1 text-lg">
+              <span class="font-semibold text-slate-300">Download</span>
+              <strong id="download-traffic" class="font-semibold text-cyan-400 loading-blur">...</strong>
+            </div>
+            <div class="w-full bg-slate-700/80 rounded-full h-2.5 loading-blur" id="download-progress-wrapper">
+              <div class="bg-cyan-500 h-2.5 rounded-full progress-bar" id="download-progress" style="width: 0%;"></div>
+            </div>
+          </div>
+          <div>
+            <div class="flex justify-between mb-1 text-lg">
+              <span class="font-semibold text-slate-300">Upload</span>
+              <strong id="upload-traffic" class="font-semibold text-cyan-400 loading-blur">...</strong>
+            </div>
+            <div class="w-full bg-slate-700/80 rounded-full h-2.5 loading-blur" id="upload-progress-wrapper">
+              <div class="bg-cyan-500 h-2.5 rounded-full progress-bar" id="upload-progress" style="width: 0%;"></div>
+            </div>
+          </div>
+          <div class="border-t border-slate-700 !my-3"></div>
+          <p class="flex justify-between items-center text-lg">Uptime: <strong id="uptime" class="text-white font-semibold">99.99%</strong></p>
         </div>
       </div>
 
@@ -384,26 +392,20 @@
         const memoryUsageEl = document.getElementById("memory-usage");
         const diskUsageEl = document.getElementById("disk-usage");
 
-        // --- MODIFICATION START: Get progress bar wrappers ---
         const cpuProgressWrapper = document.getElementById("cpu-progress-wrapper");
         const memoryProgressWrapper = document.getElementById("memory-progress-wrapper");
         const diskProgressWrapper = document.getElementById("disk-progress-wrapper");
-        // --- MODIFICATION END ---
 
         cpuUsageEl.textContent = `${newCpu}%`;
         memoryUsageEl.textContent = `${newMem}%`;
         diskUsageEl.textContent = `${newDisk}%`;
 
-        // --- MODIFICATION START: Remove loading blur ---
         cpuUsageEl.classList.remove('loading-blur');
         memoryUsageEl.classList.remove('loading-blur');
         diskUsageEl.classList.remove('loading-blur');
-        // --- MODIFICATION START: Remove blur from progress bars ---
         cpuProgressWrapper.classList.remove('loading-blur');
         memoryProgressWrapper.classList.remove('loading-blur');
         diskProgressWrapper.classList.remove('loading-blur');
-        // --- MODIFICATION END ---
-        // --- MODIFICATION END ---
 
         // Update progress bars (these have a CSS transition for smoothness)
         document.getElementById("cpu-progress").style.width = `${newCpu}%`;
@@ -422,7 +424,6 @@
         const res = await fetch("/server-location");
         const loc = await res.json();
         
-        // FIX for duplicate location name
         let locationText = loc.country || "Unknown";
         if (loc.city && loc.country && loc.city.toLowerCase() !== loc.country.toLowerCase()) {
             locationText = `${loc.city}, ${loc.country}`;
@@ -445,7 +446,6 @@
       }
     })();
 
-    // --- MODIFICATION START: Add flag and update logic for network blur ---
     // Live network traffic with smooth animation
     let isNetInitialLoad = true; // Flag for first data fetch
     async function refreshNet() {
@@ -455,10 +455,16 @@
         if (data && data.total) {
             const downloadEl = document.getElementById("download-traffic");
             const uploadEl = document.getElementById("upload-traffic");
+            const downloadProgress = document.getElementById("download-progress");
+            const uploadProgress = document.getElementById("upload-progress");
+            const downloadProgressWrapper = document.getElementById("download-progress-wrapper");
+            const uploadProgressWrapper = document.getElementById("upload-progress-wrapper");
 
             if (isNetInitialLoad) {
                 downloadEl.classList.remove('loading-blur');
                 uploadEl.classList.remove('loading-blur');
+                downloadProgressWrapper.classList.remove('loading-blur');
+                uploadProgressWrapper.classList.remove('loading-blur');
                 isNetInitialLoad = false;
             }
 
@@ -470,6 +476,15 @@
 
             animateFloatValue(downloadEl, oldDownload, newDownload, 500, 'Mbps');
             animateFloatValue(uploadEl, oldUpload, newUpload, 500, 'Mbps');
+
+            const maxDownloadMbps = 40 * 1024; // 40 Gbps
+            const maxUploadMbps = 4 * 1024;   // 4 Gbps
+
+            const downloadPercent = (newDownload / maxDownloadMbps) * 100;
+            const uploadPercent = (newUpload / maxUploadMbps) * 100;
+
+            downloadProgress.style.width = `${downloadPercent}%`;
+            uploadProgress.style.width = `${uploadPercent}%`;
         }
       } catch (e) {
         // Ignore transient errors
@@ -477,7 +492,6 @@
     }
     refreshNet();
     setInterval(refreshNet, 2000);
-    // --- MODIFICATION END ---
 
   </script>
 
