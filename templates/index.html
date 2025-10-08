@@ -512,14 +512,59 @@
     function createChart(ctx, label, color, yAxisLabel) {
         return new Chart(ctx, {
             type: 'line',
-            data: { datasets: [{ label, borderColor: color, backgroundColor: `${color}33`, fill: true, data: [], tension: 0.4, pointRadius: 0 }] },
+            data: { datasets: [{ 
+                label, 
+                borderColor: color, 
+                backgroundColor: `${color}33`, 
+                fill: true, 
+                data: [], 
+                tension: 0.4, 
+                pointRadius: 0,
+                pointHoverRadius: 5,
+                pointBackgroundColor: color
+            }] },
             options: {
-                responsive: true, maintainAspectRatio: true,
-                scales: {
-                    x: { type: 'time', time: { unit: 'second', displayFormats: { second: 'HH:mm:ss' } }, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)' } },
-                    y: { beginAtZero: true, ticks: { color: '#94a3b8', callback: (value) => value + yAxisLabel }, grid: { color: 'rgba(148, 163, 184, 0.1)' } }
+                responsive: true, 
+                maintainAspectRatio: true,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
                 },
-                plugins: { legend: { labels: { color: '#e2e8f0' } } }
+                scales: {
+                    x: { 
+                        type: 'time', 
+                        time: { 
+                            tooltipFormat: 'HH:mm:ss',
+                        },
+                        ticks: { display: false },
+                        grid: { display: false }
+                    },
+                    y: { 
+                        beginAtZero: true, 
+                        ticks: { color: '#94a3b8', callback: (value) => value + yAxisLabel }, 
+                        grid: { color: 'rgba(148, 163, 184, 0.1)' } 
+                    }
+                },
+                plugins: { 
+                    legend: { labels: { color: '#e2e8f0' } },
+                    tooltip: {
+                        enabled: true,
+                        mode: 'index',
+                        intersect: false,
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label += context.parsed.y.toFixed(2) + yAxisLabel;
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
             }
         });
     }
@@ -614,13 +659,13 @@
         const data = await res.json();
         const now = Date.now();
         
-        const newCpu = parseFloat(data.cpu).toFixed(2);
-        const newMem = parseFloat(data.ram).toFixed(2);
-        const newDisk = parseFloat(data.disk).toFixed(2);
+        const newCpu = parseFloat(data.cpu);
+        const newMem = parseFloat(data.ram);
+        const newDisk = parseFloat(data.disk);
 
-        document.getElementById("cpu-usage").textContent = `${newCpu}%`;
-        document.getElementById("memory-usage").textContent = `${newMem}%`;
-        document.getElementById("disk-usage").textContent = `${newDisk}%`;
+        document.getElementById("cpu-usage").textContent = `${newCpu.toFixed(2)}%`;
+        document.getElementById("memory-usage").textContent = `${newMem.toFixed(2)}%`;
+        document.getElementById("disk-usage").textContent = `${newDisk.toFixed(2)}%`;
 
         document.getElementById("cpu-usage").classList.remove('loading-blur');
         document.getElementById("memory-usage").classList.remove('loading-blur');
@@ -708,10 +753,22 @@
         }
       } catch (e) { /* Ignore transient errors */ }
     }
+    
+    async function refreshPing() {
+        try {
+            const start = Date.now();
+            await fetch("/ping");
+            const latency = Date.now() - start;
+            if (chartsInitialized) {
+                performanceData.ping.push({ x: Date.now(), y: latency });
+            }
+        } catch(e) { /* fail silently for chart */ }
+    }
 
     // Master update interval
     setInterval(() => {
         refreshNet();
+        refreshPing();
         updateCharts();
     }, 2000);
     setInterval(pruneData, 60000);
@@ -726,6 +783,4 @@
 
 </body>
 </html>
-
-
 
