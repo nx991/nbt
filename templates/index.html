@@ -17,6 +17,12 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 
+  <!-- Chart.js for Graphs -->
+  <script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/moment.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@1.0.0/dist/chartjs-adapter-moment.min.js"></script>
+
+
   <style>
     /* Custom style for the modern look */
     @keyframes gradientShift {
@@ -72,10 +78,8 @@
       -webkit-filter: blur(10px); /* Adjusted blur */
     }
     .card {
-      /* --- MODIFICATION START: Dark Glass UI --- */
-      background-color: rgba(10, 10, 20, 0.55); /* Dark transparent background */
-      border: 1px solid rgba(255, 255, 255, 0.1); /* Subtle border */
-      /* --- MODIFICATION END --- */
+      background-color: rgba(10, 10, 20, 0.55);
+      border: 1px solid rgba(255, 255, 255, 0.1);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
       transition: all 0.3s ease;
@@ -85,10 +89,8 @@
     .card:hover {
       transform: translateY(-5px);
       box-shadow: 0 10px 20px rgba(6, 182, 212, 0.1);
-      border-color: #06b6d4; /* cyan-500 */
-      /* --- MODIFICATION START: Dark Glass UI Hover --- */
-      background-color: rgba(10, 10, 20, 0.75); /* Slightly less transparent on hover */
-      /* --- MODIFICATION END --- */
+      border-color: #06b6d4;
+      background-color: rgba(10, 10, 20, 0.75);
     }
 
     .card::after {
@@ -121,22 +123,17 @@
         -webkit-background-clip: text;
         background-clip: text;
         background-size: 250% auto;
-        /* --- MODIFICATION START: Smoother Animation --- */
         animation: text-light-sweep 10s linear infinite;
-        /* --- MODIFICATION END --- */
     }
 
-    /* --- MODIFICATION START: Animate Subtitle --- */
     #main-header p {
       animation: subtitle-glow 4s ease-in-out infinite;
     }
-    /* --- MODIFICATION END --- */
 
     .animated-safeguard-text {
         animation: text-pulse 2.5s infinite ease-in-out;
     }
 
-    /* Custom Animations */
     @keyframes fadeInDown {
       from { opacity: 0; transform: translateY(-20px); }
       to { opacity: 1; transform: translateY(0); }
@@ -147,14 +144,11 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
-    /* --- MODIFICATION START: Loading Blur --- */
     .loading-blur {
       filter: blur(5px);
       transition: filter 0.5s ease-out;
     }
-    /* --- MODIFICATION END --- */
 
-    /* Animation utility classes */
     .anim-fadeInDown {
       animation: fadeInDown 0.8s ease-out forwards;
     }
@@ -163,10 +157,66 @@
       animation: fadeInUp 0.6s ease-out forwards;
     }
 
-    /* Fallback font for body text that needs to be readable */
     .sans-fallback {
         font-family: 'Inter', sans-serif;
         letter-spacing: normal;
+    }
+
+    /* Modal Styles */
+    #chart-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(5px);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        padding: 1rem;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0s linear 0.3s;
+    }
+
+    #chart-modal.visible {
+        opacity: 1;
+        visibility: visible;
+        transition: opacity 0.3s ease, visibility 0s;
+    }
+
+    #chart-modal-content {
+        background-color: rgba(30, 41, 59, 0.9);
+        border: 1px solid #334155;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        width: 95vw;
+        height: 95vh;
+        position: relative;
+        transform: scale(0.95);
+        transition: transform 0.3s ease;
+    }
+
+    #chart-modal.visible #chart-modal-content {
+        transform: scale(1);
+    }
+
+    #close-modal {
+        position: absolute;
+        top: 10px;
+        right: 15px;
+        font-size: 2rem;
+        color: #94a3b8;
+        cursor: pointer;
+        transition: color 0.2s;
+    }
+    #close-modal:hover {
+        color: #e2e8f0;
+    }
+    .chart-container {
+        cursor: pointer;
     }
   </style>
 </head>
@@ -177,143 +227,199 @@
     Your browser does not support HTML5 video.
   </video>
 
+  <!-- Modal for full-size chart view -->
+  <div id="chart-modal">
+    <div id="chart-modal-content">
+        <span id="close-modal">&times;</span>
+        <canvas id="modal-chart"></canvas>
+    </div>
+  </div>
+
   <div class="container mx-auto p-4 sm:p-6 lg:p-8 relative z-10">
-    <!-- Header -->
-    <header id="main-header" class="text-center mb-10 opacity-0">
-      <h1 class="text-6xl sm:text-7xl font-bold tracking-wider header-title">
-        NIMNABRO VPN
-      </h1>
-      <p class="text-slate-400 mt-2 text-xl sans-fallback">1# Sri Lanka Private VPN Provider</p>
-    </header>
+    
+    <div id="main-page-content">
+      <!-- Header -->
+      <header id="main-header" class="text-center mb-10 opacity-0">
+        <h1 class="text-6xl sm:text-7xl font-bold tracking-wider header-title">
+          NIMNABRO VPN
+        </h1>
+        <p class="text-slate-400 mt-2 text-xl sans-fallback">1# Sri Lanka Private VPN Provider</p>
+      </header>
 
-    <!-- Main Grid -->
-    <div id="cards-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- Main Grid -->
+      <div id="cards-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-      <!-- User Input -->
-      <div class="card rounded-xl p-6 opacity-0 group">
-        <h3 class="flex items-center gap-3 text-3xl text-white mb-4">
-          <i class="fas fa-user text-cyan-400 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6"></i>
-          <span>User Usage</span>
-        </h3>
-        <form id="user-form" action="/usage" method="POST" class="flex flex-col gap-4">
-          <input type="text" name="user_input" placeholder="Enter User Name" required class="w-full bg-slate-700/80 border border-slate-600 rounded-lg p-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 sans-fallback text-base" />
-          <button type="submit" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-200 active:scale-95 text-2xl">
-            Check Usage
+        <!-- User Input -->
+        <div class="card rounded-xl p-6 opacity-0 group">
+          <h3 class="flex items-center gap-3 text-3xl text-white mb-4">
+            <i class="fas fa-user text-cyan-400 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6"></i>
+            <span>User Usage</span>
+          </h3>
+          <form id="user-form" action="/usage" method="POST" class="flex flex-col gap-4">
+            <input type="text" name="user_input" placeholder="Enter User Name" required class="w-full bg-slate-700/80 border border-slate-600 rounded-lg p-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 sans-fallback text-base" />
+            <button type="submit" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-200 active:scale-95 text-2xl">
+              Check Usage
+            </button>
+          </form>
+        </div>
+
+        <!-- Server Resource Usage -->
+        <div class="card rounded-xl p-6 opacity-0 group">
+          <h3 class="flex items-center gap-3 text-3xl text-white mb-4">
+            <i class="fas fa-server text-cyan-400 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6"></i>
+            <span>Server Usage</span>
+          </h3>
+          <div class="space-y-4 sans-fallback">
+            <div>
+              <div class="flex justify-between mb-1 text-lg">
+                <span class="font-semibold text-slate-300">CPU</span>
+                <span class="font-semibold text-cyan-400 loading-blur" id="cpu-usage">...</span>
+              </div>
+              <div class="w-full bg-slate-700/80 rounded-full h-2.5 loading-blur" id="cpu-progress-wrapper">
+                <div class="bg-cyan-500 h-2.5 rounded-full progress-bar" id="cpu-progress" style="width: 0%;"></div>
+              </div>
+            </div>
+            <div>
+              <div class="flex justify-between mb-1 text-lg">
+                <span class="font-semibold text-slate-300">Memory</span>
+                <span class="font-semibold text-cyan-400 loading-blur" id="memory-usage">...</span>
+              </div>
+              <div class="w-full bg-slate-700/80 rounded-full h-2.5 loading-blur" id="memory-progress-wrapper">
+                <div class="bg-cyan-500 h-2.5 rounded-full progress-bar" id="memory-progress" style="width: 0%;"></div>
+              </div>
+            </div>
+            <div>
+              <div class="flex justify-between mb-1 text-lg">
+                <span class="font-semibold text-slate-300">Disk</span>
+                <span class="font-semibold text-cyan-400 loading-blur" id="disk-usage">...</span>
+              </div>
+              <div class="w-full bg-slate-700/80 rounded-full h-2.5 loading-blur" id="disk-progress-wrapper">
+                <div class="bg-cyan-500 h-2.5 rounded-full progress-bar" id="disk-progress" style="width: 0%;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ping Test -->
+        <div class="card rounded-xl p-6 opacity-0 group">
+          <h3 class="flex items-center gap-3 text-3xl text-white mb-4">
+            <i class="fas fa-wifi text-cyan-400 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6"></i>
+            <span>Connection Test</span>
+          </h3>
+          <button id="ping-button" class="w-full mb-4 bg-slate-700/80 hover:bg-slate-600/80 text-white font-bold py-3 px-4 rounded-lg transition-all duration-200 active:scale-95 text-2xl">
+            Ping Server
           </button>
-        </form>
-      </div>
-
-      <!-- Server Resource Usage -->
-      <div class="card rounded-xl p-6 opacity-0 group">
-        <h3 class="flex items-center gap-3 text-3xl text-white mb-4">
-          <i class="fas fa-server text-cyan-400 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6"></i>
-          <span>Server Usage</span>
-        </h3>
-        <div class="space-y-4 sans-fallback">
-          <div>
-            <div class="flex justify-between mb-1 text-lg">
-              <span class="font-semibold text-slate-300">CPU</span>
-              <span class="font-semibold text-cyan-400 loading-blur" id="cpu-usage">...</span>
-            </div>
-            <div class="w-full bg-slate-700/80 rounded-full h-2.5 loading-blur" id="cpu-progress-wrapper">
-              <div class="bg-cyan-500 h-2.5 rounded-full progress-bar" id="cpu-progress" style="width: 0%;"></div>
-            </div>
-          </div>
-          <div>
-            <div class="flex justify-between mb-1 text-lg">
-              <span class="font-semibold text-slate-300">Memory</span>
-              <span class="font-semibold text-cyan-400 loading-blur" id="memory-usage">...</span>
-            </div>
-            <div class="w-full bg-slate-700/80 rounded-full h-2.5 loading-blur" id="memory-progress-wrapper">
-              <div class="bg-cyan-500 h-2.5 rounded-full progress-bar" id="memory-progress" style="width: 0%;"></div>
-            </div>
-          </div>
-          <div>
-            <div class="flex justify-between mb-1 text-lg">
-              <span class="font-semibold text-slate-300">Disk</span>
-              <span class="font-semibold text-cyan-400 loading-blur" id="disk-usage">...</span>
-            </div>
-            <div class="w-full bg-slate-700/80 rounded-full h-2.5 loading-blur" id="disk-progress-wrapper">
-              <div class="bg-cyan-500 h-2.5 rounded-full progress-bar" id="disk-progress" style="width: 0%;"></div>
-            </div>
+          <div class="space-y-2 text-slate-300 text-lg sans-fallback">
+              <div class="flex justify-between items-center"><span class="font-semibold">Ping:</span> <strong id="ping-result" class="text-white">-</strong></div>
+              <div class="flex justify-between items-center"><span class="font-semibold">Location:</span> <strong id="server-location" class="text-white sans-fallback text-right">--</strong></div>
+              <div class="flex justify-between items-center">
+                  <span class="font-semibold">Status:</span>
+                  <div class="flex items-center gap-2">
+                      <span class="relative flex h-3 w-3">
+                          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                          <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                      </span>
+                      <strong id="server-status" class="text-green-400">Online</strong>
+                  </div>
+              </div>
           </div>
         </div>
-      </div>
 
-      <!-- Ping Test -->
-      <div class="card rounded-xl p-6 opacity-0 group">
-        <h3 class="flex items-center gap-3 text-3xl text-white mb-4">
-          <i class="fas fa-wifi text-cyan-400 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6"></i>
-          <span>Connection Test</span>
-        </h3>
-        <button id="ping-button" class="w-full mb-4 bg-slate-700/80 hover:bg-slate-600/80 text-white font-bold py-3 px-4 rounded-lg transition-all duration-200 active:scale-95 text-2xl">
-          Ping Server
-        </button>
-        <div class="space-y-2 text-slate-300 text-lg sans-fallback">
-            <div class="flex justify-between items-center"><span class="font-semibold">Ping:</span> <strong id="ping-result" class="text-white">-</strong></div>
-            <div class="flex justify-between items-center"><span class="font-semibold">Location:</span> <strong id="server-location" class="text-white sans-fallback text-right">--</strong></div>
-            <div class="flex justify-between items-center">
-                <span class="font-semibold">Status:</span>
-                <div class="flex items-center gap-2">
-                    <span class="relative flex h-3 w-3">
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-                    </span>
-                    <strong id="server-status" class="text-green-400">Online</strong>
-                </div>
+        <!-- Network Traffic -->
+        <div class="card rounded-xl p-6 opacity-0 group">
+          <h3 class="flex items-center gap-3 text-3xl text-white mb-4">
+            <i class="fas fa-exchange-alt text-cyan-400 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6"></i>
+            <span>Network Traffic</span>
+          </h3>
+          <div class="space-y-4 sans-fallback">
+            <div>
+              <div class="flex justify-between mb-1 text-lg">
+                <span class="font-semibold text-slate-300">Download</span>
+                <strong id="download-traffic" class="font-semibold text-cyan-400 loading-blur">...</strong>
+              </div>
+              <div class="w-full bg-slate-700/80 rounded-full h-2.5 loading-blur" id="download-progress-wrapper">
+                <div class="bg-cyan-500 h-2.5 rounded-full progress-bar" id="download-progress" style="width: 0%;"></div>
+              </div>
             </div>
-        </div>
-      </div>
-
-      <!-- Network Traffic -->
-      <div class="card rounded-xl p-6 opacity-0 group">
-        <h3 class="flex items-center gap-3 text-3xl text-white mb-4">
-          <i class="fas fa-exchange-alt text-cyan-400 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6"></i>
-          <span>Network Traffic</span>
-        </h3>
-        <div class="space-y-4 sans-fallback">
-          <div>
-            <div class="flex justify-between mb-1 text-lg">
-              <span class="font-semibold text-slate-300">Download</span>
-              <strong id="download-traffic" class="font-semibold text-cyan-400 loading-blur">...</strong>
+            <div>
+              <div class="flex justify-between mb-1 text-lg">
+                <span class="font-semibold text-slate-300">Upload</span>
+                <strong id="upload-traffic" class="font-semibold text-cyan-400 loading-blur">...</strong>
+              </div>
+              <div class="w-full bg-slate-700/80 rounded-full h-2.5 loading-blur" id="upload-progress-wrapper">
+                <div class="bg-cyan-500 h-2.5 rounded-full progress-bar" id="upload-progress" style="width: 0%;"></div>
+              </div>
             </div>
-            <div class="w-full bg-slate-700/80 rounded-full h-2.5 loading-blur" id="download-progress-wrapper">
-              <div class="bg-cyan-500 h-2.5 rounded-full progress-bar" id="download-progress" style="width: 0%;"></div>
-            </div>
+            <div class="border-t border-slate-700 !my-3"></div>
+            <p class="flex justify-between items-center text-lg">Uptime: <strong id="uptime" class="text-white font-semibold">99.99%</strong></p>
           </div>
-          <div>
-            <div class="flex justify-between mb-1 text-lg">
-              <span class="font-semibold text-slate-300">Upload</span>
-              <strong id="upload-traffic" class="font-semibold text-cyan-400 loading-blur">...</strong>
-            </div>
-            <div class="w-full bg-slate-700/80 rounded-full h-2.5 loading-blur" id="upload-progress-wrapper">
-              <div class="bg-cyan-500 h-2.5 rounded-full progress-bar" id="upload-progress" style="width: 0%;"></div>
-            </div>
+        </div>
+
+        <!-- Cloud Provider -->
+        <div class="card rounded-xl p-6 flex flex-col justify-center items-center opacity-0 group">
+          <i class="fas fa-cloud text-6xl text-cyan-400 mb-3 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6"></i>
+          <h3 class="text-3xl text-white">Cloud Provider</h3>
+          <p class="text-4xl text-cyan-300 mt-1" id="cloud-provider">Detecting...</p>
+        </div>
+
+        <!-- Safeguard Bubble -->
+        <div class="card rounded-xl p-6 opacity-0 group">
+          <h3 class="flex items-center gap-3 text-3xl text-white mb-4">
+            <i class="fas fa-shield-alt text-cyan-400 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6"></i>
+            <span>Server Safeguard</span>
+          </h3>
+          <div class="safeguard-content rounded-lg p-4 text-center border-2 border-green-500">
+              <i class="fas fa-lock text-4xl text-green-400 mb-2"></i>
+              <span class="block text-green-300 text-xl animated-safeguard-text">Active Firewall & DDoS Protection</span>
           </div>
-          <div class="border-t border-slate-700 !my-3"></div>
-          <p class="flex justify-between items-center text-lg">Uptime: <strong id="uptime" class="text-white font-semibold">99.99%</strong></p>
         </div>
-      </div>
-
-      <!-- Cloud Provider -->
-      <div class="card rounded-xl p-6 flex flex-col justify-center items-center opacity-0 group">
-        <i class="fas fa-cloud text-6xl text-cyan-400 mb-3 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6"></i>
-        <h3 class="text-3xl text-white">Cloud Provider</h3>
-        <p class="text-4xl text-cyan-300 mt-1" id="cloud-provider">Detecting...</p>
-      </div>
-
-      <!-- Safeguard Bubble -->
-      <div class="card rounded-xl p-6 opacity-0 group">
-        <h3 class="flex items-center gap-3 text-3xl text-white mb-4">
-          <i class="fas fa-shield-alt text-cyan-400 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6"></i>
-          <span>Server Safeguard</span>
-        </h3>
-        <div class="safeguard-content rounded-lg p-4 text-center border-2 border-green-500">
-            <i class="fas fa-lock text-4xl text-green-400 mb-2"></i>
-            <span class="block text-green-300 text-xl animated-safeguard-text">Active Firewall & DDoS Protection</span>
+        
+        <!-- Performance Monitor Link -->
+        <div id="performance-card" class="card rounded-xl p-6 opacity-0 group md:col-span-2 lg:col-span-3 cursor-pointer">
+           <div class="text-center">
+                <h3 class="flex items-center justify-center gap-3 text-3xl text-white mb-2">
+                    <i class="fas fa-chart-line text-cyan-400 transition-transform duration-300 group-hover:scale-110"></i>
+                    <span>Performance Monitor</span>
+                </h3>
+                <p class="text-slate-400 sans-fallback">View live performance graphs and details</p>
+           </div>
         </div>
+
       </div>
     </div>
+    
+    <!-- Performance Page Content -->
+    <div id="performance-page-content" style="display: none;" class="anim-fadeInUp">
+        <header class="flex justify-between items-center mb-6">
+            <button id="back-to-main" class="bg-slate-700/80 hover:bg-slate-600/80 text-white font-bold py-2 px-4 rounded-lg transition-all duration-200 active:scale-95 text-xl flex items-center gap-2">
+                <i class="fas fa-arrow-left"></i>
+                <span>Back</span>
+            </button>
+            <div class="text-right">
+                <h2 class="text-3xl font-bold text-white">Live Performance</h2>
+                <p id="local-time" class="text-cyan-300 sans-fallback">Loading local time...</p>
+            </div>
+        </header>
+
+        <div class="card rounded-xl p-4 mb-6">
+            <div id="time-range-selector" class="flex justify-center items-center gap-2 sans-fallback">
+                <span class="text-slate-300">Time Range:</span>
+                <button data-range="60" class="time-range-btn bg-cyan-600 text-white py-1 px-3 rounded-md">1 Min</button>
+                <button data-range="300" class="time-range-btn bg-slate-700/80 hover:bg-slate-600/80 text-white py-1 px-3 rounded-md">5 Min</button>
+                <button data-range="1800" class="time-range-btn bg-slate-700/80 hover:bg-slate-600/80 text-white py-1 px-3 rounded-md">30 Min</button>
+            </div>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="card rounded-xl p-4 chart-container" data-chart-id="cpuChart"><canvas id="cpuChart"></canvas></div>
+            <div class="card rounded-xl p-4 chart-container" data-chart-id="memChart"><canvas id="memChart"></canvas></div>
+            <div class="card rounded-xl p-4 chart-container" data-chart-id="diskChart"><canvas id="diskChart"></canvas></div>
+            <div class="card rounded-xl p-4 chart-container" data-chart-id="downloadChart"><canvas id="downloadChart"></canvas></div>
+            <div class="card rounded-xl p-4 chart-container" data-chart-id="uploadChart"><canvas id="uploadChart"></canvas></div>
+            <div class="card rounded-xl p-4 chart-container" data-chart-id="pingChart"><canvas id="pingChart"></canvas></div>
+        </div>
+    </div>
+
 
     <!-- Footer -->
     <footer class="text-center mt-12 py-6 border-t border-slate-700/50 sans-fallback">
@@ -327,15 +433,30 @@
   </div>
 
   <script>
+    // --- Page Navigation ---
+    const mainPage = document.getElementById('main-page-content');
+    const performancePage = document.getElementById('performance-page-content');
+    const performanceCard = document.getElementById('performance-card');
+    const backButton = document.getElementById('back-to-main');
+
+    performanceCard.addEventListener('click', () => {
+        mainPage.style.display = 'none';
+        performancePage.style.display = 'block';
+        initializeCharts();
+    });
+
+    backButton.addEventListener('click', () => {
+        performancePage.style.display = 'none';
+        mainPage.style.display = 'block';
+    });
+
+
     // --- UI Animation Logic ---
     document.addEventListener('DOMContentLoaded', () => {
-      // Animate header
       const header = document.getElementById('main-header');
       if (header) {
         header.classList.add('anim-fadeInDown');
       }
-
-      // Animate cards with stagger effect
       const cards = document.querySelectorAll('#cards-grid .card');
       cards.forEach((card, index) => {
         card.style.animationDelay = `${index * 120}ms`;
@@ -343,7 +464,7 @@
       });
     });
     
-    // --- Helper function for smooth number animation (for network traffic only) ---
+    // --- Helper function ---
     function animateFloatValue(element, start, end, duration, unit) {
         let startTimestamp = null;
         const step = (timestamp) => {
@@ -360,7 +481,14 @@
         window.requestAnimationFrame(step);
     }
 
-    // --- ALL SERVER INTERACTION LOGIC IS PRESERVED ---
+    // --- Charting and Performance Data ---
+    let charts = {};
+    let modalChartInstance = null;
+    let performanceData = {
+        cpu: [], memory: [], disk: [], download: [], upload: [], ping: []
+    };
+    let selectedTimeRange = 60;
+    const MAX_DATA_AGE = 1800;
 
     // Ping logic
     document.getElementById("ping-button").addEventListener("click", async () => {
@@ -372,9 +500,111 @@
         await fetch("/ping");
         const latency = Date.now() - start;
         result.textContent = `${latency} ms`;
+        if (chartsInitialized) {
+            performanceData.ping.push({ x: Date.now(), y: latency });
+        }
       } catch {
         result.textContent = "Ping failed";
       }
+    });
+
+    
+    function createChart(ctx, label, color, yAxisLabel) {
+        return new Chart(ctx, {
+            type: 'line',
+            data: { datasets: [{ label, borderColor: color, backgroundColor: `${color}33`, fill: true, data: [], tension: 0.4, pointRadius: 0 }] },
+            options: {
+                responsive: true, maintainAspectRatio: true,
+                scales: {
+                    x: { type: 'time', time: { unit: 'second', displayFormats: { second: 'HH:mm:ss' } }, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)' } },
+                    y: { beginAtZero: true, ticks: { color: '#94a3b8', callback: (value) => value + yAxisLabel }, grid: { color: 'rgba(148, 163, 184, 0.1)' } }
+                },
+                plugins: { legend: { labels: { color: '#e2e8f0' } } }
+            }
+        });
+    }
+    
+    let chartsInitialized = false;
+    function initializeCharts() {
+        if (chartsInitialized) return;
+        charts.cpuChart = createChart(document.getElementById('cpuChart').getContext('2d'), 'CPU Usage', '#38bdf8', '%');
+        charts.memChart = createChart(document.getElementById('memChart').getContext('2d'), 'Memory Usage', '#34d399', '%');
+        charts.diskChart = createChart(document.getElementById('diskChart').getContext('2d'), 'Disk Usage', '#f472b6', '%');
+        charts.downloadChart = createChart(document.getElementById('downloadChart').getContext('2d'), 'Download', '#a78bfa', ' Mbps');
+        charts.uploadChart = createChart(document.getElementById('uploadChart').getContext('2d'), 'Upload', '#fb923c', ' Mbps');
+        charts.pingChart = createChart(document.getElementById('pingChart').getContext('2d'), 'Ping Latency', '#facc15', ' ms');
+        chartsInitialized = true;
+    }
+
+    function updateCharts() {
+        if (!chartsInitialized) return;
+        const now = Date.now();
+        const timeLimit = now - selectedTimeRange * 1000;
+
+        for (const key in charts) {
+            const chart = charts[key];
+            const dataKey = key.replace('Chart', '');
+            const data = performanceData[dataKey].filter(d => d.x >= timeLimit);
+            chart.data.datasets[0].data = data;
+            chart.options.scales.x.time.unit = selectedTimeRange > 300 ? 'minute' : 'second';
+            chart.update('quiet');
+        }
+    }
+
+    document.querySelectorAll('.time-range-btn').forEach(button => {
+        button.addEventListener('click', (e) => {
+            selectedTimeRange = parseInt(e.target.dataset.range);
+            document.querySelectorAll('.time-range-btn').forEach(btn => {
+                btn.classList.remove('bg-cyan-600');
+                btn.classList.add('bg-slate-700/80', 'hover:bg-slate-600/80');
+            });
+            e.target.classList.add('bg-cyan-600');
+            e.target.classList.remove('bg-slate-700/80', 'hover:bg-slate-600/80');
+            updateCharts();
+        });
+    });
+
+    function pruneData() {
+        const pruneLimit = Date.now() - MAX_DATA_AGE * 1000;
+        for (const key in performanceData) {
+            performanceData[key] = performanceData[key].filter(d => d.x >= pruneLimit);
+        }
+    }
+
+    // Modal Logic
+    const modal = document.getElementById('chart-modal');
+    const closeModalBtn = document.getElementById('close-modal');
+    
+    document.querySelectorAll('.chart-container').forEach(container => {
+        container.addEventListener('click', () => {
+            const chartId = container.dataset.chartId;
+            const sourceChart = charts[chartId];
+            if (sourceChart) {
+                const modalCtx = document.getElementById('modal-chart').getContext('2d');
+                if (modalChartInstance) {
+                    modalChartInstance.destroy();
+                }
+
+                // Deep copy options and modify for modal
+                const modalOptions = JSON.parse(JSON.stringify(sourceChart.options));
+                modalOptions.maintainAspectRatio = false;
+
+                modalChartInstance = new Chart(modalCtx, {
+                    type: 'line',
+                    data: sourceChart.data,
+                    options: modalOptions
+                });
+                modal.classList.add('visible');
+            }
+        });
+    });
+
+    closeModalBtn.addEventListener('click', () => {
+        modal.classList.remove('visible');
+        if (modalChartInstance) {
+            modalChartInstance.destroy();
+            modalChartInstance = null;
+        }
     });
 
     // Server data updates
@@ -382,39 +612,34 @@
       try {
         const res = await fetch("/server-status");
         const data = await res.json();
+        const now = Date.now();
         
-        // FIX: Display exact decimal values for server stats
         const newCpu = parseFloat(data.cpu).toFixed(2);
         const newMem = parseFloat(data.ram).toFixed(2);
         const newDisk = parseFloat(data.disk).toFixed(2);
 
-        const cpuUsageEl = document.getElementById("cpu-usage");
-        const memoryUsageEl = document.getElementById("memory-usage");
-        const diskUsageEl = document.getElementById("disk-usage");
+        document.getElementById("cpu-usage").textContent = `${newCpu}%`;
+        document.getElementById("memory-usage").textContent = `${newMem}%`;
+        document.getElementById("disk-usage").textContent = `${newDisk}%`;
 
-        const cpuProgressWrapper = document.getElementById("cpu-progress-wrapper");
-        const memoryProgressWrapper = document.getElementById("memory-progress-wrapper");
-        const diskProgressWrapper = document.getElementById("disk-progress-wrapper");
+        document.getElementById("cpu-usage").classList.remove('loading-blur');
+        document.getElementById("memory-usage").classList.remove('loading-blur');
+        document.getElementById("disk-usage").classList.remove('loading-blur');
+        document.getElementById("cpu-progress-wrapper").classList.remove('loading-blur');
+        document.getElementById("memory-progress-wrapper").classList.remove('loading-blur');
+        document.getElementById("disk-progress-wrapper").classList.remove('loading-blur');
 
-        cpuUsageEl.textContent = `${newCpu}%`;
-        memoryUsageEl.textContent = `${newMem}%`;
-        diskUsageEl.textContent = `${newDisk}%`;
-
-        cpuUsageEl.classList.remove('loading-blur');
-        memoryUsageEl.classList.remove('loading-blur');
-        diskUsageEl.classList.remove('loading-blur');
-        cpuProgressWrapper.classList.remove('loading-blur');
-        memoryProgressWrapper.classList.remove('loading-blur');
-        diskProgressWrapper.classList.remove('loading-blur');
-
-        // Update progress bars (these have a CSS transition for smoothness)
         document.getElementById("cpu-progress").style.width = `${newCpu}%`;
         document.getElementById("memory-progress").style.width = `${newMem}%`;
         document.getElementById("disk-progress").style.width = `${newDisk}%`;
+        
+        if (chartsInitialized) {
+            performanceData.cpu.push({ x: now, y: newCpu });
+            performanceData.memory.push({ x: now, y: newMem });
+            performanceData.disk.push({ x: now, y: newDisk });
+        }
 
-      } catch (e) {
-        console.error("Status fetch failed");
-      }
+      } catch (e) { console.error("Status fetch failed"); }
     }, 2000);
     
     // Fetch server location
@@ -423,16 +648,12 @@
       try {
         const res = await fetch("/server-location");
         const loc = await res.json();
-        
         let locationText = loc.country || "Unknown";
         if (loc.city && loc.country && loc.city.toLowerCase() !== loc.country.toLowerCase()) {
             locationText = `${loc.city}, ${loc.country}`;
         }
-
         locationEl.textContent = locationText;
-      } catch {
-        locationEl.textContent = "Unavailable";
-      }
+      } catch { locationEl.textContent = "Unavailable"; }
     })();
 
     // Fetch cloud provider name
@@ -441,13 +662,11 @@
         const res = await fetch("/cloud-provider");
         const data = await res.json();
         document.getElementById("cloud-provider").textContent = data.provider || "Unknown";
-      } catch {
-        document.getElementById("cloud-provider").textContent = "Unavailable";
-      }
+      } catch { document.getElementById("cloud-provider").textContent = "Unavailable"; }
     })();
 
-    // Live network traffic with smooth animation
-    let isNetInitialLoad = true; // Flag for first data fetch
+    // Live network traffic
+    let isNetInitialLoad = true; 
     async function refreshNet() {
       try {
         const r = await fetch("/net-live");
@@ -470,31 +689,43 @@
 
             const oldDownload = parseFloat(downloadEl.textContent) || 0;
             const oldUpload = parseFloat(uploadEl.textContent) || 0;
-
             const newDownload = data.total.rx_mbps;
             const newUpload = data.total.tx_mbps;
 
             animateFloatValue(downloadEl, oldDownload, newDownload, 500, 'Mbps');
             animateFloatValue(uploadEl, oldUpload, newUpload, 500, 'Mbps');
 
-            const maxDownloadMbps = 40 * 1024; // 40 Gbps
-            const maxUploadMbps = 4 * 1024;   // 4 Gbps
-
-            const downloadPercent = (newDownload / maxDownloadMbps) * 100;
-            const uploadPercent = (newUpload / maxUploadMbps) * 100;
-
-            downloadProgress.style.width = `${downloadPercent}%`;
-            uploadProgress.style.width = `${uploadPercent}%`;
+            const maxDownloadMbps = 40 * 1024;
+            const maxUploadMbps = 4 * 1024;
+            downloadProgress.style.width = `${(newDownload / maxDownloadMbps) * 100}%`;
+            uploadProgress.style.width = `${(newUpload / maxUploadMbps) * 100}%`;
+            
+            if (chartsInitialized) {
+                const now = Date.now();
+                performanceData.download.push({ x: now, y: newDownload });
+                performanceData.upload.push({ x: now, y: newUpload });
+            }
         }
-      } catch (e) {
-        // Ignore transient errors
-      }
+      } catch (e) { /* Ignore transient errors */ }
     }
-    refreshNet();
-    setInterval(refreshNet, 2000);
+
+    // Master update interval
+    setInterval(() => {
+        refreshNet();
+        updateCharts();
+    }, 2000);
+    setInterval(pruneData, 60000);
+
+    // Update local time
+    setInterval(() => {
+        document.getElementById('local-time').textContent = new Date().toLocaleTimeString();
+    }, 1000);
+
 
   </script>
 
 </body>
 </html>
+
+
 
