@@ -402,11 +402,13 @@
         </header>
 
         <div class="card rounded-xl p-4 mb-6">
-            <div id="time-range-selector" class="flex justify-center items-center gap-2 sans-fallback">
+            <div id="time-range-selector" class="flex justify-center items-center gap-2 sans-fallback flex-wrap">
                 <span class="text-slate-300">Time Range:</span>
                 <button data-range="60" class="time-range-btn bg-cyan-600 text-white py-1 px-3 rounded-md">1 Min</button>
                 <button data-range="300" class="time-range-btn bg-slate-700/80 hover:bg-slate-600/80 text-white py-1 px-3 rounded-md">5 Min</button>
                 <button data-range="1800" class="time-range-btn bg-slate-700/80 hover:bg-slate-600/80 text-white py-1 px-3 rounded-md">30 Min</button>
+                <button data-range="3600" class="time-range-btn bg-slate-700/80 hover:bg-slate-600/80 text-white py-1 px-3 rounded-md">1 Hour</button>
+                <button data-range="86400" class="time-range-btn bg-slate-700/80 hover:bg-slate-600/80 text-white py-1 px-3 rounded-md">24 Hours</button>
             </div>
         </div>
         
@@ -488,7 +490,7 @@
         cpu: [], mem: [], disk: [], download: [], upload: [], ping: []
     };
     let selectedTimeRange = 60;
-    const MAX_DATA_AGE = 1800;
+    const MAX_DATA_AGE = 86400; // 24 hours in seconds
 
     // Ping logic
     document.getElementById("ping-button").addEventListener("click", async () => {
@@ -509,7 +511,7 @@
     });
 
     
-    function createChart(ctx, label, color, yAxisLabel) {
+    function createChart(ctx, label, color, yAxisLabel, suggestedMax = null) {
         return new Chart(ctx, {
             type: 'line',
             data: { datasets: [{ 
@@ -541,6 +543,7 @@
                     },
                     y: { 
                         beginAtZero: true, 
+                        max: suggestedMax,
                         ticks: { color: '#94a3b8', callback: (value) => value + yAxisLabel }, 
                         grid: { color: 'rgba(148, 163, 184, 0.1)' } 
                     }
@@ -572,9 +575,9 @@
     let chartsInitialized = false;
     function initializeCharts() {
         if (chartsInitialized) return;
-        charts.cpuChart = createChart(document.getElementById('cpuChart').getContext('2d'), 'CPU Usage', '#38bdf8', '%');
-        charts.memChart = createChart(document.getElementById('memChart').getContext('2d'), 'Memory Usage', '#34d399', '%');
-        charts.diskChart = createChart(document.getElementById('diskChart').getContext('2d'), 'Disk Usage', '#f472b6', '%');
+        charts.cpuChart = createChart(document.getElementById('cpuChart').getContext('2d'), 'CPU Usage', '#38bdf8', '%', 100);
+        charts.memChart = createChart(document.getElementById('memChart').getContext('2d'), 'Memory Usage', '#34d399', '%', 100);
+        charts.diskChart = createChart(document.getElementById('diskChart').getContext('2d'), 'Disk Usage', '#f472b6', '%', 100);
         charts.downloadChart = createChart(document.getElementById('downloadChart').getContext('2d'), 'Download', '#a78bfa', ' Mbps');
         charts.uploadChart = createChart(document.getElementById('uploadChart').getContext('2d'), 'Upload', '#fb923c', ' Mbps');
         charts.pingChart = createChart(document.getElementById('pingChart').getContext('2d'), 'Ping Latency', '#facc15', ' ms');
@@ -591,7 +594,14 @@
             const dataKey = key.replace('Chart', '');
             const data = performanceData[dataKey].filter(d => d.x >= timeLimit);
             chart.data.datasets[0].data = data;
-            chart.options.scales.x.time.unit = selectedTimeRange > 300 ? 'minute' : 'second';
+            
+            if (selectedTimeRange > 3600) { // More than 1 hour
+                 chart.options.scales.x.time.unit = 'hour';
+            } else if (selectedTimeRange > 300) { // More than 5 mins
+                 chart.options.scales.x.time.unit = 'minute';
+            } else {
+                 chart.options.scales.x.time.unit = 'second';
+            }
             chart.update('quiet');
         }
     }
