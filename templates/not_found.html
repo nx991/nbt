@@ -45,46 +45,149 @@
       -webkit-backdrop-filter: blur(10px);
       position: relative;
       overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-5px) scale(1.02);
+      box-shadow: 0 10px 25px rgba(239, 68, 68, 0.15); /* Red glow */
+      border-color: #f87171; /* red-400 */
+    }
+
+    /* Shimmer effect on hover */
+    .card::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -150%;
+        width: 100%;
+        height: 100%;
+        transform: skewX(-20deg);
+        background-image: linear-gradient(100deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0));
+        transition: left 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+    }
+
+    .card:hover::after {
+        left: 150%;
     }
     
     .sans-fallback {
         font-family: 'Inter', sans-serif;
         letter-spacing: normal;
     }
-     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
+
+    /* --- BASE ANIMATION --- */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(25px); }
       to { opacity: 1; transform: translateY(0); }
     }
-    
-    .anim-fadeIn {
-      animation: fadeIn 0.8s ease-out forwards;
+
+    .animated-element {
+        opacity: 0; /* Start hidden */
+        animation: fadeInUp 0.7s ease-out forwards;
     }
+    
+    /* --- REMAINING ANIMATIONS --- */
+    @keyframes icon-pulse {
+        0%, 100% {
+            transform: scale(1);
+            text-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+        }
+        50% {
+            transform: scale(1.08);
+            text-shadow: 0 0 25px rgba(239, 68, 68, 0.8);
+        }
+    }
+
+    @keyframes text-glow {
+        0%, 100% { text-shadow: 0 0 8px rgba(255, 255, 255, 0.4); }
+        50% { text-shadow: 0 0 16px rgba(255, 255, 255, 0.7); }
+    }
+
+    /* Animation Classes */
+    .pulsing-icon {
+        animation: icon-pulse 3s ease-in-out infinite;
+    }
+
+    .glowing-title {
+        animation: text-glow 4s ease-in-out infinite;
+    }
+
+    .gradient-button {
+        background-image: linear-gradient(to right, #22d3ee 0%, #0891b2 50%, #22d3ee 100%);
+        background-size: 200% auto;
+        transition: all 0.4s ease !important;
+    }
+    .gradient-button:hover {
+        background-position: right center;
+    }
+
   </style>
 </head>
-<body class="antialiased">
+<body class="antialiased flex flex-col min-h-screen">
 
   <video autoplay muted loop id="bg-video">
     <source src="https://files.catbox.moe/mj9qr1.mp4" type="video/mp4">
     Your browser does not support HTML5 video.
   </video>
 
-  <div class="container mx-auto p-4 sm:p-6 lg:p-8 relative z-10 flex items-center justify-center min-h-screen">
+  <main class="flex-grow container mx-auto p-4 sm:p-6 lg:p-8 relative z-10 flex items-center justify-center">
     
     <!-- Not Found Card -->
-    <div class="card rounded-xl p-8 sm:p-12 text-center max-w-lg w-full anim-fadeIn">
-        <i class="fas fa-user-slash text-7xl text-red-400 mb-6"></i>
-        <h1 class="text-5xl font-bold tracking-wider text-white mb-3">
+    <div class="card rounded-2xl p-8 sm:p-12 text-center max-w-lg w-full animated-element" style="animation-delay: 0.1s;">
+        <i class="fas fa-user-slash text-7xl text-red-400 mb-6 inline-block pulsing-icon"></i>
+        <h1 class="text-5xl font-bold tracking-wider text-white mb-3 animated-element glowing-title" style="animation-delay: 0.5s;">
             User Not Found
         </h1>
-        <p class="text-slate-300 text-xl sans-fallback mb-8">
-            The user you searched for does not exist in our system. Please check the name and try again.
+        <p class="text-slate-300 text-xl sans-fallback mb-4 animated-element" style="animation-delay: 0.7s;">
+            The user you searched for does not exist. Please check the name and try again.
         </p>
-        <a href="/" class="inline-block bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-8 rounded-lg transition-all duration-200 active:scale-95 text-2xl sans-fallback">
+        <p id="redirect-message" class="text-slate-400 text-lg sans-fallback mb-8 animated-element" style="animation-delay: 0.8s;">
+            <!-- Countdown message appears here -->
+        </p>
+        <a href="/" class="inline-block bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-8 rounded-lg transition-all duration-200 active:scale-95 text-2xl sans-fallback animated-element gradient-button" style="animation-delay: 0.9s;">
           <i class="fas fa-arrow-left mr-2"></i> Go Back
        </a>
     </div>
 
-  </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="text-center w-full py-6 border-t border-slate-700/50 sans-fallback relative z-10 mt-auto">
+      <p class="text-slate-500">&copy; 2025 NIMNABRO All rights reserved.</p>
+      <div class="social-icons mt-4">
+        <a href="https://guns.lol/nimnabro" target="_blank" class="text-slate-400 hover:text-cyan-400 transition-colors text-2xl">
+          <i class="fas fa-link"></i>
+        </a>
+      </div>
+  </footer>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const redirectMessage = document.getElementById('redirect-message');
+      let countdown = 10;
+
+      // Set the initial message
+      redirectMessage.textContent = `Redirecting in ${countdown} seconds...`;
+
+      // Update the countdown every second
+      const intervalId = setInterval(() => {
+        countdown--;
+        if (countdown > 0) {
+          redirectMessage.textContent = `Redirecting in ${countdown} seconds...`;
+        } else {
+          redirectMessage.textContent = 'Redirecting now...';
+          clearInterval(intervalId);
+        }
+      }, 1000);
+
+      // Redirect after 5 seconds
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 5000);
+    });
+  </script>
 
 </body>
 </html>
+
