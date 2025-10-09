@@ -502,9 +502,7 @@
         await fetch("/ping");
         const latency = Date.now() - start;
         result.textContent = `${latency} ms`;
-        if (chartsInitialized) {
-            performanceData.ping.push({ x: Date.now(), y: latency });
-        }
+        performanceData.ping.push({ x: Date.now(), y: latency });
       } catch {
         result.textContent = "Ping failed";
       }
@@ -542,7 +540,7 @@
                         grid: { display: false }
                     },
                     y: { 
-                        beginAtZero: true, 
+                        min: 0,
                         max: suggestedMax,
                         ticks: { color: '#94a3b8', callback: (value) => value + yAxisLabel }, 
                         grid: { color: 'rgba(148, 163, 184, 0.1)' } 
@@ -654,14 +652,6 @@
         });
     });
 
-    closeModalBtn.addEventListener('click', () => {
-        modal.classList.remove('visible');
-        if (modalChartInstance) {
-            modalChartInstance.destroy();
-            modalChartInstance = null;
-        }
-    });
-
     async function refreshServerStatus() {
         try {
             const res = await fetch("/server-status");
@@ -687,11 +677,9 @@
             document.getElementById("memory-progress").style.width = `${newMem}%`;
             document.getElementById("disk-progress").style.width = `${newDisk}%`;
             
-            if (chartsInitialized) {
-                performanceData.cpu.push({ x: now, y: newCpu });
-                performanceData.mem.push({ x: now, y: newMem });
-                performanceData.disk.push({ x: now, y: newDisk });
-            }
+            performanceData.cpu.push({ x: now, y: newCpu });
+            performanceData.mem.push({ x: now, y: newMem });
+            performanceData.disk.push({ x: now, y: newDisk });
 
         } catch (e) { console.error("Status fetch failed"); }
     }
@@ -754,11 +742,9 @@
             downloadProgress.style.width = `${(newDownload / maxDownloadMbps) * 100}%`;
             uploadProgress.style.width = `${(newUpload / maxUploadMbps) * 100}%`;
             
-            if (chartsInitialized) {
-                const now = Date.now();
-                performanceData.download.push({ x: now, y: newDownload });
-                performanceData.upload.push({ x: now, y: newUpload });
-            }
+            const now = Date.now();
+            performanceData.download.push({ x: now, y: newDownload });
+            performanceData.upload.push({ x: now, y: newUpload });
         }
       } catch (e) { /* Ignore transient errors */ }
     }
@@ -768,9 +754,7 @@
             const start = Date.now();
             await fetch("/ping");
             const latency = Date.now() - start;
-            if (chartsInitialized) {
-                performanceData.ping.push({ x: Date.now(), y: latency });
-            }
+            performanceData.ping.push({ x: Date.now(), y: latency });
         } catch(e) { /* fail silently for chart */ }
     }
 
@@ -793,4 +777,5 @@
 
 </body>
 </html>
+
 
