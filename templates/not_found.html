@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NIMNABRO VPN | User Not Found</title>
+  <link rel="icon" type="image/png" href="https://www.dropbox.com/scl/fi/us9bg2xv9agp03izul2yq/channels4_profile_1-modified-1.png?rlkey=224q0p35gk2jum9rp40vvvpxc&raw=1">
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Font Awesome for Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Google Fonts: Russo One & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* --- Core styles from your other pages for visual consistency --- */
+    body {
+      font-family: 'Russo One', sans-serif;
+      color: #cbd5e1; /* slate-300 */
+      letter-spacing: 0.5px;
+      background-color: #0f172a; /* Fallback background */
+    }
+
+    #bg-video {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: -100;
+      filter: blur(10px);
+      -webkit-filter: blur(10px);
+    }
+
+    .card {
+      background-color: rgba(10, 10, 20, 0.55);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .sans-fallback {
+        font-family: 'Inter', sans-serif;
+        letter-spacing: normal;
+    }
+     @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .anim-fadeIn {
+      animation: fadeIn 0.8s ease-out forwards;
+    }
+  </style>
+</head>
+<body class="antialiased">
+
+  <video autoplay muted loop id="bg-video">
+    <source src="https://files.catbox.moe/mj9qr1.mp4" type="video/mp4">
+    Your browser does not support HTML5 video.
+  </video>
+
+  <div class="container mx-auto p-4 sm:p-6 lg:p-8 relative z-10 flex items-center justify-center min-h-screen">
+    
+    <!-- Not Found Card -->
+    <div class="card rounded-xl p-8 sm:p-12 text-center max-w-lg w-full anim-fadeIn">
+        <i class="fas fa-user-slash text-7xl text-red-400 mb-6"></i>
+        <h1 class="text-5xl font-bold tracking-wider text-white mb-3">
+            User Not Found
+        </h1>
+        <p class="text-slate-300 text-xl sans-fallback mb-8">
+            The user you searched for does not exist in our system. Please check the name and try again.
+        </p>
+        <a href="/" class="inline-block bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-8 rounded-lg transition-all duration-200 active:scale-95 text-2xl sans-fallback">
+          <i class="fas fa-arrow-left mr-2"></i> Go Back
+       </a>
+    </div>
+
+  </div>
+
+</body>
+</html>

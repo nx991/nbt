@@ -99,7 +99,8 @@ def usage():
             cur.execute(query, (user_input, user_input))
             row = cur.fetchone()
             if not row:
-                return "No data found for this user.", 404
+                # --- THIS IS THE MODIFIED LINE ---
+                return render_template("not_found.html"), 404
 
             email = row["email"]
             up = convert_bytes(row["up"])
