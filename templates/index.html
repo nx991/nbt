@@ -413,12 +413,48 @@
         </div>
         
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div class="card rounded-xl p-4 chart-container" data-chart-id="cpuChart"><canvas id="cpuChart"></canvas></div>
-            <div class="card rounded-xl p-4 chart-container" data-chart-id="memChart"><canvas id="memChart"></canvas></div>
-            <div class="card rounded-xl p-4 chart-container" data-chart-id="diskChart"><canvas id="diskChart"></canvas></div>
-            <div class="card rounded-xl p-4 chart-container" data-chart-id="downloadChart"><canvas id="downloadChart"></canvas></div>
-            <div class="card rounded-xl p-4 chart-container" data-chart-id="uploadChart"><canvas id="uploadChart"></canvas></div>
-            <div class="card rounded-xl p-4 chart-container" data-chart-id="pingChart"><canvas id="pingChart"></canvas></div>
+            <div class="card rounded-xl p-4 chart-container" data-chart-id="cpuChart">
+                <canvas id="cpuChart"></canvas>
+                <div class="text-center mt-2 sans-fallback">
+                    <span class="text-slate-400 text-sm">Current Usage</span>
+                    <p id="current-cpu-value" class="text-cyan-300 font-bold text-xl">...</p>
+                </div>
+            </div>
+            <div class="card rounded-xl p-4 chart-container" data-chart-id="memChart">
+                <canvas id="memChart"></canvas>
+                <div class="text-center mt-2 sans-fallback">
+                    <span class="text-slate-400 text-sm">Current Usage</span>
+                    <p id="current-mem-value" class="text-cyan-300 font-bold text-xl">...</p>
+                </div>
+            </div>
+            <div class="card rounded-xl p-4 chart-container" data-chart-id="diskChart">
+                <canvas id="diskChart"></canvas>
+                <div class="text-center mt-2 sans-fallback">
+                    <span class="text-slate-400 text-sm">Current Usage</span>
+                    <p id="current-disk-value" class="text-cyan-300 font-bold text-xl">...</p>
+                </div>
+            </div>
+            <div class="card rounded-xl p-4 chart-container" data-chart-id="downloadChart">
+                <canvas id="downloadChart"></canvas>
+                <div class="text-center mt-2 sans-fallback">
+                    <span class="text-slate-400 text-sm">Current Speed</span>
+                    <p id="current-download-value" class="text-cyan-300 font-bold text-xl">...</p>
+                </div>
+            </div>
+            <div class="card rounded-xl p-4 chart-container" data-chart-id="uploadChart">
+                <canvas id="uploadChart"></canvas>
+                <div class="text-center mt-2 sans-fallback">
+                    <span class="text-slate-400 text-sm">Current Speed</span>
+                    <p id="current-upload-value" class="text-cyan-300 font-bold text-xl">...</p>
+                </div>
+            </div>
+            <div class="card rounded-xl p-4 chart-container" data-chart-id="pingChart">
+                <canvas id="pingChart"></canvas>
+                <div class="text-center mt-2 sans-fallback">
+                    <span class="text-slate-400 text-sm">Current Latency</span>
+                    <p id="current-ping-value" class="text-cyan-300 font-bold text-xl">...</p>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -652,6 +688,16 @@
         });
     });
 
+    closeModalBtn.addEventListener('click', () => {
+        modal.classList.remove('visible');
+    });
+
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.classList.remove('visible');
+        }
+    });
+
     async function refreshServerStatus() {
         try {
             const res = await fetch("/server-status");
@@ -665,6 +711,10 @@
             document.getElementById("cpu-usage").textContent = `${newCpu.toFixed(2)}%`;
             document.getElementById("memory-usage").textContent = `${newMem.toFixed(2)}%`;
             document.getElementById("disk-usage").textContent = `${newDisk.toFixed(2)}%`;
+
+            document.getElementById("current-cpu-value").textContent = `${newCpu.toFixed(2)}%`;
+            document.getElementById("current-mem-value").textContent = `${newMem.toFixed(2)}%`;
+            document.getElementById("current-disk-value").textContent = `${newDisk.toFixed(2)}%`;
 
             document.getElementById("cpu-usage").classList.remove('loading-blur');
             document.getElementById("memory-usage").classList.remove('loading-blur');
@@ -737,6 +787,9 @@
             animateFloatValue(downloadEl, oldDownload, newDownload, 500, 'Mbps');
             animateFloatValue(uploadEl, oldUpload, newUpload, 500, 'Mbps');
 
+            document.getElementById("current-download-value").textContent = `${newDownload.toFixed(2)} Mbps`;
+            document.getElementById("current-upload-value").textContent = `${newUpload.toFixed(2)} Mbps`;
+
             const maxDownloadMbps = 40 * 1024;
             const maxUploadMbps = 4 * 1024;
             downloadProgress.style.width = `${(newDownload / maxDownloadMbps) * 100}%`;
@@ -750,12 +803,17 @@
     }
     
     async function refreshPing() {
+        const pingValueEl = document.getElementById("current-ping-value");
         try {
             const start = Date.now();
             await fetch("/ping");
             const latency = Date.now() - start;
             performanceData.ping.push({ x: Date.now(), y: latency });
-        } catch(e) { /* fail silently for chart */ }
+            if (pingValueEl) pingValueEl.textContent = `${latency} ms`;
+        } catch(e) { 
+            if (pingValueEl) pingValueEl.textContent = `N/A`;
+            /* fail silently for chart */ 
+        }
     }
 
     // Master update interval
@@ -777,5 +835,3 @@
 
 </body>
 </html>
-
-
