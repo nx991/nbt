@@ -485,7 +485,7 @@
     let charts = {};
     let modalChartInstance = null;
     let performanceData = {
-        cpu: [], memory: [], disk: [], download: [], upload: [], ping: []
+        cpu: [], mem: [], disk: [], download: [], upload: [], ping: []
     };
     let selectedTimeRange = 60;
     const MAX_DATA_AGE = 1800;
@@ -679,7 +679,7 @@
             
             if (chartsInitialized) {
                 performanceData.cpu.push({ x: now, y: newCpu });
-                performanceData.memory.push({ x: now, y: newMem });
+                performanceData.mem.push({ x: now, y: newMem });
                 performanceData.disk.push({ x: now, y: newDisk });
             }
 
