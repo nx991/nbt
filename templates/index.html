@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>NIMNABRO VPN</title>
   <link rel="icon" type="image/png" href="https://www.dropbox.com/scl/fi/us9bg2xv9agp03izul2yq/channels4_profile_1-modified-1.png?rlkey=224q0p35gk2jum9rp40vvvpxc&raw=1">
   
@@ -76,6 +76,8 @@
       z-index: -100;
       filter: blur(10px); /* Adjusted blur */
       -webkit-filter: blur(10px); /* Adjusted blur */
+      opacity: 0;
+      transition: opacity 1.5s ease-in-out;
     }
     .card {
       background-color: rgba(10, 10, 20, 0.55);
@@ -223,7 +225,7 @@
 <body class="antialiased bg-slate-900">
 
   <video autoplay muted loop id="bg-video">
-    <source src="https://files.catbox.moe/mj9qr1.mp4" type="video/mp4">
+    <!-- The video source is now loaded dynamically by the script below -->
     Your browser does not support HTML5 video.
   </video>
 
@@ -471,26 +473,72 @@
   </div>
 
   <script>
-    // --- Page Navigation ---
-    const mainPage = document.getElementById('main-page-content');
-    const performancePage = document.getElementById('performance-page-content');
-    const performanceCard = document.getElementById('performance-card');
-    const backButton = document.getElementById('back-to-main');
-
-    performanceCard.addEventListener('click', () => {
-        mainPage.style.display = 'none';
-        performancePage.style.display = 'block';
-        initializeCharts();
-    });
-
-    backButton.addEventListener('click', () => {
-        performancePage.style.display = 'none';
-        mainPage.style.display = 'block';
-    });
-
-
-    // --- UI Animation Logic ---
     document.addEventListener('DOMContentLoaded', () => {
+      const videoElement = document.getElementById('bg-video');
+
+      // Add listener to fade in video when ready
+      videoElement.addEventListener('canplay', () => {
+        videoElement.style.opacity = '1';
+      });
+
+      // --- DYNAMIC VIDEO LOADER ---
+      const videoUrlGist = 'https://gist.githubusercontent.com/nx991/3e1ac6d1bb159e30b1d4c013f2cc7785/raw/video.txt';
+
+      fetch(videoUrlGist)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.text();
+        })
+        .then(videoUrl => {
+            if (videoElement && videoUrl && videoUrl.trim() !== '') {
+                videoElement.src = videoUrl.trim();
+                videoElement.load();
+                const playPromise = videoElement.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(error => {
+                        console.error("Autoplay for dynamic video was prevented:", error);
+                    });
+                }
+            } else {
+                throw new Error('Fetched video URL is empty.');
+            }
+        })
+        .catch(error => {
+            console.error('Failed to fetch dynamic video URL, using fallback:', error);
+            if (videoElement) {
+                 videoElement.src = 'https://files.catbox.moe/mj9qr1.mp4';
+                 videoElement.load();
+                 const playPromise = videoElement.play();
+                 if (playPromise !== undefined) {
+                    playPromise.catch(error => {
+                        console.error("Autoplay for fallback video was prevented:", error);
+                    });
+                 }
+            }
+        });
+      // --- END DYNAMIC VIDEO LOADER ---
+
+      // --- Page Navigation ---
+      const mainPage = document.getElementById('main-page-content');
+      const performancePage = document.getElementById('performance-page-content');
+      const performanceCard = document.getElementById('performance-card');
+      const backButton = document.getElementById('back-to-main');
+
+      performanceCard.addEventListener('click', () => {
+          mainPage.style.display = 'none';
+          performancePage.style.display = 'block';
+          initializeCharts();
+      });
+
+      backButton.addEventListener('click', () => {
+          performancePage.style.display = 'none';
+          mainPage.style.display = 'block';
+      });
+
+
+      // --- UI Animation Logic ---
       const header = document.getElementById('main-header');
       if (header) {
         header.classList.add('anim-fadeInDown');
@@ -520,6 +568,8 @@
     }
 
     // --- Charting and Performance Data ---
+    // Note: This data is stored in browser memory only and is completely cleared when the page is refreshed or closed.
+    // It is NOT saved to any local files on your computer.
     let charts = {};
     let modalChartInstance = null;
     let performanceData = {
@@ -817,12 +867,14 @@
     }
 
     // Master update interval
+    // The interval was increased from 2s to 5s to reduce the amount of data collected,
+    // which prevents lag and high memory usage over long periods.
     setInterval(() => {
         refreshServerStatus();
         refreshNet();
         refreshPing();
         updateCharts();
-    }, 2000);
+    }, 5000);
     setInterval(pruneData, 60000);
 
     // Update local time

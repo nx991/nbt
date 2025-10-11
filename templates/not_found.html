@@ -36,6 +36,10 @@
       z-index: -100;
       filter: blur(10px);
       -webkit-filter: blur(10px);
+      /* --- START EDIT: Smooth Fade-in for Video --- */
+      opacity: 0;
+      transition: opacity 1.5s ease-in-out;
+      /* --- END EDIT --- */
     }
 
     .card {
@@ -127,7 +131,7 @@
 <body class="antialiased flex flex-col min-h-screen">
 
   <video autoplay muted loop id="bg-video">
-    <source src="https://files.catbox.moe/mj9qr1.mp4" type="video/mp4">
+    <!-- The video source is now loaded dynamically by the script below -->
     Your browser does not support HTML5 video.
   </video>
 
@@ -164,6 +168,53 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
+      const videoElement = document.getElementById('bg-video');
+
+      // --- START EDIT: Add listener to fade in video when ready ---
+      videoElement.addEventListener('canplay', () => {
+        videoElement.style.opacity = '1';
+      });
+      // --- END EDIT ---
+
+      // --- DYNAMIC VIDEO LOADER ---
+      const videoUrlGist = 'https://gist.githubusercontent.com/nx991/3e1ac6d1bb159e30b1d4c013f2cc7785/raw/video.txt';
+      
+      fetch(videoUrlGist)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.text();
+        })
+        .then(videoUrl => {
+            if (videoElement && videoUrl && videoUrl.trim() !== '') {
+                videoElement.src = videoUrl.trim();
+                videoElement.load();
+                const playPromise = videoElement.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(error => {
+                        console.error("Autoplay for dynamic video was prevented:", error);
+                    });
+                }
+            } else {
+                throw new Error('Fetched video URL is empty.');
+            }
+        })
+        .catch(error => {
+            console.error('Failed to fetch dynamic video URL, using fallback:', error);
+            if (videoElement) {
+                 videoElement.src = 'https://files.catbox.moe/mj9qr1.mp4';
+                 videoElement.load();
+                 const playPromise = videoElement.play();
+                 if (playPromise !== undefined) {
+                    playPromise.catch(error => {
+                        console.error("Autoplay for fallback video was prevented:", error);
+                    });
+                 }
+            }
+        });
+      // --- END DYNAMIC VIDEO LOADER ---
+        
       const redirectMessage = document.getElementById('redirect-message');
       let countdown = 10;
 
