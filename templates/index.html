@@ -484,7 +484,8 @@
       // --- DYNAMIC VIDEO LOADER ---
       const videoUrlGist = 'https://gist.githubusercontent.com/nx991/3e1ac6d1bb159e30b1d4c013f2cc7785/raw/video.txt';
 
-      fetch(videoUrlGist)
+      // Fetch the video URL, preventing the browser from using a cached version.
+      fetch(videoUrlGist, { cache: 'no-store' })
         .then(response => {
             if (!response.ok) {
                 throw new Error('Network response was not ok');
