@@ -302,17 +302,13 @@
           </div>
         </div>
 
-        <!-- Ping Test -->
+        <!-- Server Status -->
         <div class="card rounded-xl p-6 opacity-0 group">
           <h3 class="flex items-center gap-3 text-3xl text-white mb-4">
-            <i class="fas fa-wifi text-cyan-400 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6"></i>
-            <span>Connection Test</span>
+            <i class="fas fa-network-wired text-cyan-400 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6"></i>
+            <span>Server Status</span>
           </h3>
-          <button id="ping-button" class="w-full mb-4 bg-slate-700/80 hover:bg-slate-600/80 text-white font-bold py-3 px-4 rounded-lg transition-all duration-200 active:scale-95 text-2xl">
-            Ping Server
-          </button>
-          <div class="space-y-2 text-slate-300 text-lg sans-fallback">
-              <div class="flex justify-between items-center"><span class="font-semibold">Ping:</span> <strong id="ping-result" class="text-white">-</strong></div>
+          <div class="space-y-4 text-slate-300 text-lg sans-fallback pt-2">
               <div class="flex justify-between items-center"><span class="font-semibold">Location:</span> <strong id="server-location" class="text-white sans-fallback text-right">--</strong></div>
               <div class="flex justify-between items-center">
                   <span class="font-semibold">Status:</span>
@@ -450,13 +446,6 @@
                     <p id="current-upload-value" class="text-cyan-300 font-bold text-xl">...</p>
                 </div>
             </div>
-            <div class="card rounded-xl p-4 chart-container" data-chart-id="pingChart">
-                <canvas id="pingChart"></canvas>
-                <div class="text-center mt-2 sans-fallback">
-                    <span class="text-slate-400 text-sm">Current Latency</span>
-                    <p id="current-ping-value" class="text-cyan-300 font-bold text-xl">...</p>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -574,27 +563,10 @@
     let charts = {};
     let modalChartInstance = null;
     let performanceData = {
-        cpu: [], mem: [], disk: [], download: [], upload: [], ping: []
+        cpu: [], mem: [], disk: [], download: [], upload: []
     };
     let selectedTimeRange = 60;
     const MAX_DATA_AGE = 86400; // 24 hours in seconds
-
-    // Ping logic
-    document.getElementById("ping-button").addEventListener("click", async () => {
-      const start = Date.now();
-      const result = document.getElementById("ping-result");
-      result.textContent = "Pinging...";
-
-      try {
-        await fetch("/ping");
-        const latency = Date.now() - start;
-        result.textContent = `${latency} ms`;
-        performanceData.ping.push({ x: Date.now(), y: latency });
-      } catch {
-        result.textContent = "Ping failed";
-      }
-    });
-
     
     function createChart(ctx, label, color, yAxisLabel, suggestedMax = null) {
         return new Chart(ctx, {
@@ -665,7 +637,6 @@
         charts.diskChart = createChart(document.getElementById('diskChart').getContext('2d'), 'Disk Usage', '#f472b6', '%', 100);
         charts.downloadChart = createChart(document.getElementById('downloadChart').getContext('2d'), 'Download', '#a78bfa', ' Mbps');
         charts.uploadChart = createChart(document.getElementById('uploadChart').getContext('2d'), 'Upload', '#fb923c', ' Mbps');
-        charts.pingChart = createChart(document.getElementById('pingChart').getContext('2d'), 'Ping Latency', '#facc15', ' ms');
         chartsInitialized = true;
     }
 
@@ -852,20 +823,6 @@
         }
       } catch (e) { /* Ignore transient errors */ }
     }
-    
-    async function refreshPing() {
-        const pingValueEl = document.getElementById("current-ping-value");
-        try {
-            const start = Date.now();
-            await fetch("/ping");
-            const latency = Date.now() - start;
-            performanceData.ping.push({ x: Date.now(), y: latency });
-            if (pingValueEl) pingValueEl.textContent = `${latency} ms`;
-        } catch(e) { 
-            if (pingValueEl) pingValueEl.textContent = `N/A`;
-            /* fail silently for chart */ 
-        }
-    }
 
     // Master update interval
     // The interval is now set to 2s for more frequent updates. Note that shorter intervals 
@@ -873,7 +830,6 @@
     setInterval(() => {
         refreshServerStatus();
         refreshNet();
-        refreshPing();
         updateCharts();
     }, 2000);
     setInterval(pruneData, 60000);
