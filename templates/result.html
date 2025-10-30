@@ -98,22 +98,12 @@
   </video>
 
   <div class="container mx-auto p-4 sm:p-6 lg:p-8 relative z-10">
-    
     <header class="text-center mb-10">
       <h1 class="text-5xl sm:text-6xl font-bold tracking-wider text-white">
         Usage Details
       </h1>
-      
-      <div class="inline-block bg-slate-800/60 border border-slate-700 rounded-lg px-6 py-3 mt-4 anim-fadeIn" style="animation-delay: 100ms;">
-        <div class="flex items-center gap-3">
-            <i class="fas fa-user-check text-cyan-400 text-2xl"></i>
-            <div>
-                <span class="text-slate-400 text-sm sans-fallback block text-left uppercase">Viewing User</span>
-                <p class="text-white text-xl sans-fallback font-semibold tracking-wide">{{ email }}</p>
-            </div>
-        </div>
-      </div>
-    </header>
+      </header>
+
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
       <div class="card rounded-xl p-6 opacity-0 group">
@@ -122,6 +112,10 @@
           <span>User Overview</span>
         </h3>
         <div class="space-y-3 sans-fallback text-lg">
+            <div class="flex justify-between items-center bg-slate-800/50 p-3 rounded-lg">
+                <span class="font-semibold">User</span>
+                <span class="font-bold text-white">{{ email }}</span>
+            </div>
             <div class="flex justify-between items-center bg-slate-800/50 p-3 rounded-lg">
                 <span class="font-semibold">Config Status</span>
                 <div id="status-display" class="flex items-center gap-2">
@@ -161,12 +155,6 @@
             <span>Quick Info</span>
         </h3>
         <div class="space-y-3 sans-fallback text-lg">
-            
-            <div class="flex justify-between items-center bg-blue-900/60 p-3 rounded-lg border border-blue-600">
-                <span class="font-semibold text-blue-300">Today's Usage</span>
-                <span id="today-usage-badge" class="font-bold text-white">{{ today_usage_mb | default('...') }} MB</span>
-            </div>
-
              <div class="flex justify-between items-center bg-slate-800/50 p-3 rounded-lg">
                 <span class="font-semibold">Data Limit</span>
                 <span class="font-bold text-white">{{ total }}</span>
@@ -203,10 +191,6 @@
             <div id="days-left-bar" class="h-4 rounded-full progress-bar" style="width: 0%;"></div>
         </div>
         <p id="expiry-desc" class="text-center mt-3 sans-fallback text-lg h-6"></p>
-      </div>
-
-      <div class="card rounded-xl p-6 opacity-0 group md:col-span-3">
-        <div id="daily-usage-chart" class="w-full h-96"></div>
       </div>
 
     </div>
@@ -261,7 +245,7 @@
         .catch(error => {
             console.error('Failed to fetch dynamic video URL, using fallback:', error);
             if (videoElement) {
-                 videoElement.src = 'https.files.catbox.moe/mj9qr1.mp4';
+                 videoElement.src = 'https://files.catbox.moe/mj9qr1.mp4';
                  videoElement.load();
                  const playPromise = videoElement.play();
                  if (playPromise !== undefined) {
@@ -275,14 +259,14 @@
 
       // --- UI Animation ---
       const cards = document.querySelectorAll('.card');
-      // Start card animation after the header badge (which has 100ms delay)
       cards.forEach((card, index) => {
-        card.style.animationDelay = `${index * 100 + 200}ms`;
+        card.style.animationDelay = `${index * 100}ms`;
         card.classList.add('anim-fadeIn');
       });
     });
     
     // --- BASE CODE IS PRESERVED AND ADAPTED FOR NEW UI ---
+    // (No changes were made to the script below)
 
     // ===== Helpers =====
     function parseNum(str){ if (!str) return 0; const m=String(str).match(/[\d.]+/); return m?parseFloat(m[0]):0; }
@@ -318,7 +302,6 @@
     const totalStr = "{{ total }}";
     const userStatus = ("{{ user_status }}".trim().toLowerCase() === "enabled");
     const expiryStr = "{{ expiry_date }}";
-    // NOTE: 'today_usage_mb' is read directly in the HTML with a default filter.
 
     // Convert to MB for math
     let upMB = toMB(parseNum(upStr), unit(upStr));
@@ -435,108 +418,6 @@
       legend:{ position:'top', horizontalAlign: 'left' }
     };
     new ApexCharts(document.querySelector("#summary-chart"), summaryOptions).render();
-
-    // ****************************************
-    // *** 30-DAY CHART SCRIPT ***
-    // ****************************************
-
-    // Helper function to generate test data
-    function getDummyDailyData() {
-        const data = [];
-        const today = new Date();
-        for (let i = 29; i >= 0; i--) { // Loop for the last 30 days
-            const date = new Date(today);
-            date.setDate(today.getDate() - i);
-            date.setHours(0, 0, 0, 0); // Set to start of the day
-            
-            // Generate random usage between 500MB and 5GB
-            const usageMB = Math.floor(Math.random() * (5 * 1024) + 500); 
-            
-            data.push({
-                x: date.getTime(), // ApexCharts uses timestamps for datetime axis
-                y: usageMB // Usage in MB
-            });
-        }
-        return data;
-    }
-
-    // --- THIS IS THE IMPORTANT PART ---
-    // 1. You must modify your backend to pass a JSON variable, e.g., {{ daily_data_json | safe }}
-    // 2. You would then parse it here:
-    // const realDailyData = {{ daily_data_json | safe }};
-    // const formattedData = realDailyData.map(item => ({
-    //     x: new Date(item.date).getTime(),
-    //     y: item.usage 
-    // }));
-    
-    // 3. For now, we use the dummy data function for testing:
-    const dailyData = getDummyDailyData();
-
-    const dailyChartOptions = {
-      chart: { 
-        type: 'area', 
-        height: '100%', 
-        foreColor:'#cbd5e1', 
-        toolbar: { show: true, tools: { download: true, selection: true, zoom: true, zoomin: true, zoomout: true, pan: true } }
-      },
-      series: [
-        { 
-          name:'Usage', 
-          data: dailyData // <-- REPLACE 'dailyData' with 'formattedData' when your backend is ready
-        }
-      ],
-      colors: ['#06b6d4'], // cyan-500
-      title: { 
-        text: 'Last 30 Days Usage', 
-        align: 'left', 
-        style: { fontSize: '20px', color: '#e2e8f0', fontFamily: 'Russo One' }
-      },
-      xaxis: { 
-        type: 'datetime',
-        labels: { 
-            style: { colors: '#cbd5e1', fontFamily: 'Inter' }, 
-            datetimeFormatter: { month: 'MMM dd' }
-        },
-        tooltip: { enabled: false }
-      },
-      yaxis: { 
-        labels: { 
-            style: { fontFamily: 'Inter' },
-            formatter: (v) => { // Format Y-axis to show MB or GB
-                if (v >= 1024) return (v/1024).toFixed(1)+' GB';
-                return v.toFixed(0)+' MB';
-            }
-        }
-      },
-      tooltip: { 
-        theme: 'dark', 
-        x: { format: 'MMM dd, yyyy' },
-        y: { 
-            formatter:(v) => { // Format Tooltip to show MB or GB
-                if (v >= 1024) return (v/1024).toFixed(2)+' GB';
-                return v.toFixed(2)+' MB';
-            }
-        }
-      },
-      dataLabels: { enabled: false },
-      stroke: { curve: 'smooth', width: 2 },
-      fill: {
-        type: 'gradient',
-        gradient: {
-            shadeIntensity: 1,
-            opacityFrom: 0.7,
-            opacityTo: 0.1,
-            stops: [0, 90, 100]
-        }
-      },
-      grid: { borderColor: 'rgba(255,255,255,.15)' }
-    };
-    
-    // Render the new chart
-    new ApexCharts(document.querySelector("#daily-usage-chart"), dailyChartOptions).render();
-    // ****************************************
-    // *** END 30-DAY CHART SCRIPT ***
-    // ****************************************
 
   </script>
 
