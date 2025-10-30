@@ -25,7 +25,7 @@ while true; do
         2)
             echo "Uninstalling NBT..."
             # IMPORTANT: This URL must point to your new project's uninstaller
-            bash <(curl -s https://raw.githubusercontent.com/nx991/nbt/main/uninstall.sh)
+            bash <(curl -s https://raw.githubusercontent.com/nx991/nbt/main/rm-TX.sh)
             echo "NBT has been uninstalled."
             exit 0
             ;;

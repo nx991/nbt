@@ -1,18 +1,12 @@
 #!/bin/bash
 
-# @fileOverview Check usage stats of X-SL
-# @author MasterHide
-# @Copyright © 2025 x404 MASTER™
+# @fileOverview Uninstaller for NBT
+# @author nx991 (adapted from MasterHide)
+# @Copyright © 2025 nbt
 # @license MIT
-#
-# You may not reproduce or distribute this work, in whole or in part, 
-# without the express written consent of the copyright owner.
-#
-# For more information, visit: https://t.me/Dark_Evi
-
 
 # Ask user for confirmation
-echo "This script will uninstall Traffic-X and all associated files. Are you sure you want to proceed? (y/n)"
+echo "This script will uninstall NBT and all associated files. Are you sure you want to proceed? (y/n)"
 read CONFIRM
 
 if [ "$CONFIRM" != "y" ]; then
@@ -20,53 +14,70 @@ if [ "$CONFIRM" != "y" ]; then
     exit 0
 fi
 
+# -------- Auto-detect username (from installer) --------
+USERNAME="${SUDO_USER:-$(whoami)}"
+if [[ -z "$USERNAME" || "$USERNAME" == "root" ]]; then
+  POSSIBLE_USER="$(logname 2>/dev/null || true)"
+  if [[ -n "${POSSIBLE_USER:-}" && "${POSSIBLE_USER}" != "root" ]]; then
+    USERNAME="$POSSIBLE_USER"
+  fi
+fi
+
+HOME_DIR=$(eval echo "~$USERNAME")
+if [[ ! -d "$HOME_DIR" ]]; then
+    echo "Could not auto-detect user home directory. Aborting."
+    exit 1
+fi
+echo "Auto-detected user: $USERNAME (Home: $HOME_DIR)"
+# -------- End auto-detect --------
+
+
 # Stop and disable the systemd service
-echo "Stopping and disabling the Traffic-X service..."
-sudo systemctl stop traffic-x
-sudo systemctl disable traffic-x
+echo "Stopping and disabling the NBT service..."
+sudo systemctl stop nbt
+sudo systemctl disable nbt
 
 # Remove the systemd service file
-echo "Removing the Traffic-X systemd service file..."
-sudo rm -f /etc/systemd/system/traffic-x.service
+echo "Removing the NBT systemd service file..."
+sudo rm -f /etc/systemd/system/nbt.service
 
 # Reload systemd to reflect changes
 sudo systemctl daemon-reload
 
-# Ask for the OS username used during installation
-echo "Enter the OS username used during installation (e.g., ubuntu):"
-read USERNAME
-
-# Remove the Traffic-X directory and its contents
-echo "Removing the Traffic-X directory..."
-sudo rm -rf /home/$USERNAME/Traffic-X
+# Remove the NBT directory and its contents
+echo "Removing the NBT directory..."
+sudo rm -rf "$HOME_DIR/nbt"
 
 # Remove SSL certificates
 echo "Removing SSL certificates..."
-sudo rm -rf /var/lib/Traffic-X/certs
+sudo rm -rf /var/lib/nbt/certs
 
-# Remove acme.sh (optional, if it was installed specifically for Traffic-X)
+# Remove acme.sh
 echo "Removing acme.sh (SSL certificate tool)..."
-sudo rm -rf /root/.acme.sh
+sudo rm -rf "$HOME_DIR/.acme.sh"
+sudo rm -rf "/root/.acme.sh" # Also check root's home
 
-# Remove cron job added by acme.sh (if any)
+# Remove cron job added by acme.sh
 echo "Removing acme.sh cron job..."
-sudo crontab -l | grep -v "/root/.acme.sh/acme.sh --cron" | sudo crontab -
+(sudo crontab -u $USERNAME -l 2>/dev/null | grep -v "$HOME_DIR/.acme.sh/acme.sh --cron" | sudo crontab -u $USERNAME -) || true
+(sudo crontab -u root -l 2>/dev/null | grep -v "/root/.acme.sh/acme.sh --cron" | sudo crontab -u root -) || true
 
 # Remove log files
-echo "Removing Traffic-X log files..."
-sudo rm -f /var/log/traffic-x.log
+echo "Removing NBT log files..."
+sudo rm -f /var/log/nbt.log
 
-# Optional: Remove Python dependencies (if no longer needed)
-echo "Do you want to uninstall Python dependencies installed for Traffic-X? (y/n)"
+# Optional: Remove Python dependencies
+echo "Do you want to uninstall Python dependencies installed for NBT? (y/n)"
 read REMOVE_DEPS
 
 if [ "$REMOVE_DEPS" == "y" ]; then
     echo "Uninstalling Python dependencies..."
-    sudo apt remove -y python3-pip python3-venv git sqlite3 socat
+    # Match dependencies from the installer
+    sudo apt remove -y python3-pip python3-venv git sqlite3 socat unzip curl
     sudo apt autoremove -y
 else
     echo "Skipping Python dependency removal."
 fi
 
 # Final message
-echo "Traffic-X has been successfully uninstalled."
+echo "NBT has been successfully uninstalled."
